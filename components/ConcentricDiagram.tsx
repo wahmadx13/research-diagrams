@@ -84,6 +84,8 @@ export default function ConcentricDesigner() {
         ],
       },
     ],
+    // Store text for the gaps between arches (the "channels")
+    channelTexts: {} as Record<string, string>,
     arrows: [] as ArrowData[],
   });
 
@@ -91,7 +93,7 @@ export default function ConcentricDesigner() {
     gapSize: 20,
     levelThickness: 60,
     centerRadius: 70,
-    arcPadding: 2,
+    arcPadding: 10, // Increased default padding to make gaps easier to click
   });
 
   const [selectedArc, setSelectedArc] = useState<{
@@ -111,19 +113,6 @@ export default function ConcentricDesigner() {
 
   const svgRef = useRef<SVGSVGElement>(null);
 
-  // --- SMOOTH ROTATION HELPER ---
-  const getAngle = (clientX: number, clientY: number, arrow: ArrowData) => {
-    if (!svgRef.current) return 0;
-    const rect = svgRef.current.getBoundingClientRect();
-    const x =
-      clientX -
-      (rect.left + rect.width / 2 + (arrow.offsetX * rect.width) / SVG_SIZE);
-    const y =
-      clientY -
-      (rect.top + rect.height / 2 + (arrow.offsetY * rect.height) / SVG_SIZE);
-    return (Math.atan2(y, x) * 180) / Math.PI + 90;
-  };
-
   // --- MOUSE LOGIC ---
   const handleMouseMove = useCallback(
     (e: MouseEvent) => {
@@ -134,7 +123,6 @@ export default function ConcentricDesigner() {
       const rect = svgRef.current.getBoundingClientRect();
       const scale = SVG_SIZE / rect.width;
 
-      // 1. DRAG BODY MODE: Only updates the X/Y position
       if (dragState.mode === "move") {
         const dx = (e.clientX - dragState.initialMouseX) * scale;
         const dy = (e.clientY - dragState.initialMouseY) * scale;
@@ -153,15 +141,10 @@ export default function ConcentricDesigner() {
         return;
       }
 
-      // 2. ROTATE/RESIZE MODE: Updates Angle and Radius
-      // IMPORTANT: We subtract the offset from the mouse position
-      // to keep the arrow "anchored" in its current place.
       const mouseX = (e.clientX - rect.left) * scale;
       const mouseY = (e.clientY - rect.top) * scale;
-
       const relativeX = mouseX - (CENTER + arrow.offsetX);
       const relativeY = mouseY - (CENTER + arrow.offsetY);
-
       const newAngle = (Math.atan2(relativeY, relativeX) * 180) / Math.PI + 90;
       const newRadius = Math.sqrt(
         relativeX * relativeX + relativeY * relativeY
@@ -192,6 +175,20 @@ export default function ConcentricDesigner() {
   }, [dragState, handleMouseMove]);
 
   // --- ACTIONS ---
+  const updateChannelText = (
+    levelIdx: number,
+    sectorIdx: number,
+    text: string
+  ) => {
+    setData((prev) => ({
+      ...prev,
+      channelTexts: {
+        ...prev.channelTexts,
+        [`${levelIdx}-${sectorIdx}`]: text,
+      },
+    }));
+  };
+
   const addLevel = () => {
     const newArcs = Array(data.sectors)
       .fill(null)
@@ -202,7 +199,6 @@ export default function ConcentricDesigner() {
     }));
   };
 
-  // NEW FUNCTIONALITY: Remove Level
   const removeLevel = (id: string) => {
     setData((prev) => ({
       ...prev,
@@ -282,8 +278,6 @@ export default function ConcentricDesigner() {
           <h3 className="text-xs font-bold text-gray-400 uppercase">
             Structure
           </h3>
-
-          {/* NEW: Level List with Delete Buttons */}
           <div className="space-y-2">
             <label className="text-[10px] font-bold text-gray-400 uppercase">
               Active Rings
@@ -316,11 +310,11 @@ export default function ConcentricDesigner() {
             />
           </div>
           <div className="space-y-2">
-            <label className="text-[10px]">Arch Gap (Horizontal)</label>
+            <label className="text-[10px]">Arch Gap (Horizontal Width)</label>
             <input
               type="range"
-              min="0"
-              max="20"
+              min="2"
+              max="40"
               value={config.arcPadding}
               onChange={(e) =>
                 setConfig({ ...config, arcPadding: parseInt(e.target.value) })
@@ -345,18 +339,9 @@ export default function ConcentricDesigner() {
           </button>
         </div>
 
-        {/* --- ARC EDITOR --- */}
         {selectedArc && data.levels[selectedArc.levelIndex] ? (
           <div className="p-4 bg-gray-50 rounded-lg border space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-xs font-bold">Edit Arch</span>
-              <button
-                onClick={() => setSelectedArc(null)}
-                className="text-[10px] text-blue-500"
-              >
-                Close
-              </button>
-            </div>
+            <span className="text-xs font-bold">Edit Arch</span>
             <textarea
               className="w-full p-2 text-sm border rounded"
               rows={2}
@@ -375,117 +360,53 @@ export default function ConcentricDesigner() {
               }
             />
             <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="text-[10px]">Fill</label>
-                <input
-                  type="color"
-                  className="w-full h-8 block"
-                  value={
-                    data.levels[selectedArc.levelIndex].arcs[
-                      selectedArc.sectorIndex
-                    ].color
-                  }
-                  onChange={(e) =>
-                    updateArc(
-                      selectedArc.levelIndex,
-                      selectedArc.sectorIndex,
-                      "color",
-                      e.target.value
-                    )
-                  }
-                />
-              </div>
-              <div>
-                <label className="text-[10px]">Text</label>
-                <input
-                  type="color"
-                  className="w-full h-8 block"
-                  value={
-                    data.levels[selectedArc.levelIndex].arcs[
-                      selectedArc.sectorIndex
-                    ].textColor
-                  }
-                  onChange={(e) =>
-                    updateArc(
-                      selectedArc.levelIndex,
-                      selectedArc.sectorIndex,
-                      "textColor",
-                      e.target.value
-                    )
-                  }
-                />
-              </div>
+              <input
+                type="color"
+                className="w-full h-8 block"
+                value={
+                  data.levels[selectedArc.levelIndex].arcs[
+                    selectedArc.sectorIndex
+                  ].color
+                }
+                onChange={(e) =>
+                  updateArc(
+                    selectedArc.levelIndex,
+                    selectedArc.sectorIndex,
+                    "color",
+                    e.target.value
+                  )
+                }
+              />
+              <input
+                type="color"
+                className="w-full h-8 block"
+                value={
+                  data.levels[selectedArc.levelIndex].arcs[
+                    selectedArc.sectorIndex
+                  ].textColor
+                }
+                onChange={(e) =>
+                  updateArc(
+                    selectedArc.levelIndex,
+                    selectedArc.sectorIndex,
+                    "textColor",
+                    e.target.value
+                  )
+                }
+              />
             </div>
+            <button
+              onClick={() => setSelectedArc(null)}
+              className="w-full text-xs text-blue-500 py-1"
+            >
+              Close
+            </button>
           </div>
         ) : (
           <p className="text-xs text-gray-400 italic text-center border p-4 rounded-lg">
-            Click an arc to edit its text/color
+            Click an arch to edit its text/color
           </p>
         )}
-
-        <div className="space-y-2">
-          <h3 className="text-xs font-bold text-gray-400 uppercase">Arrows</h3>
-          <button
-            onClick={() =>
-              setData((prev) => ({
-                ...prev,
-                arrows: [
-                  ...prev.arrows,
-                  {
-                    id: Date.now(),
-                    type: "single",
-                    startAngle: 0,
-                    endAngle: 45,
-                    radius: 200,
-                    color: "#ef4444",
-                    offsetX: 0,
-                    offsetY: 0,
-                  },
-                ],
-              }))
-            }
-            className="w-full py-2 bg-gray-800 text-white rounded text-xs font-bold"
-          >
-            + New Arrow
-          </button>
-          <div className="max-h-32 overflow-y-auto space-y-1">
-            {data.arrows.map((a) => (
-              <div
-                key={a.id}
-                className="flex gap-2 p-1 border rounded items-center"
-              >
-                <select
-                  className="text-[10px] flex-1"
-                  value={a.type}
-                  onChange={(e) =>
-                    setData((prev) => ({
-                      ...prev,
-                      arrows: prev.arrows.map((ar) =>
-                        ar.id === a.id
-                          ? { ...ar, type: e.target.value as ArrowType }
-                          : ar
-                      ),
-                    }))
-                  }
-                >
-                  <option value="single">Single</option>
-                  <option value="double">Double</option>
-                  <option value="curved">Curved</option>
-                </select>
-                <button
-                  onClick={() =>
-                    setData((prev) => ({
-                      ...prev,
-                      arrows: prev.arrows.filter((ar) => ar.id !== a.id),
-                    }))
-                  }
-                >
-                  <Trash2 size={12} className="text-red-400" />
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
 
         <button
           onClick={downloadPNG}
@@ -553,7 +474,7 @@ export default function ConcentricDesigner() {
               </div>
             </foreignObject>
 
-            {/* Arches */}
+            {/* Arches & Sector Gaps (Channels) */}
             {data.levels.map((lvl, lIdx) => {
               const r =
                 config.centerRadius +
@@ -561,58 +482,117 @@ export default function ConcentricDesigner() {
                 lIdx * (config.levelThickness + config.gapSize) +
                 config.levelThickness / 2;
               const step = 360 / data.sectors;
-              return lvl.arcs.map((arc, sIdx) => {
-                const s = sIdx * step + config.arcPadding / 2;
-                const e = (sIdx + 1) * step - config.arcPadding / 2;
-                const path = describeTextArc(CENTER, CENTER, r, s, e);
-                const isSelected =
-                  selectedArc?.levelIndex === lIdx &&
-                  selectedArc?.sectorIndex === sIdx;
-                return (
-                  <g
-                    key={`${lIdx}-${sIdx}`}
-                    className="cursor-pointer"
-                    onClick={() =>
-                      setSelectedArc({ levelIndex: lIdx, sectorIndex: sIdx })
-                    }
-                  >
-                    <path
-                      d={path.d}
-                      fill="none"
-                      stroke={arc.color}
-                      strokeWidth={config.levelThickness}
-                    />
-                    {isSelected && (
-                      <path
-                        d={path.d}
-                        fill="none"
-                        stroke="#3b82f6"
-                        strokeWidth={config.levelThickness + 4}
-                        strokeOpacity="0.3"
-                      />
-                    )}
-                    <path id={`p-${lIdx}-${sIdx}`} d={path.d} fill="none" />
-                    <text
-                      fill={arc.textColor}
-                      className="text-[14px] font-bold pointer-events-none"
-                    >
-                      <textPath
-                        href={`#p-${lIdx}-${sIdx}`}
-                        startOffset="50%"
-                        textAnchor="middle"
-                        dominantBaseline="middle"
-                      >
-                        {arc.text}
-                      </textPath>
-                    </text>
-                  </g>
-                );
-              });
+
+              return (
+                <g key={lvl.id}>
+                  {lvl.arcs.map((arc, sIdx) => {
+                    const s = sIdx * step + config.arcPadding / 2;
+                    const e = (sIdx + 1) * step - config.arcPadding / 2;
+                    const path = describeTextArc(CENTER, CENTER, r, s, e);
+                    const isSelected =
+                      selectedArc?.levelIndex === lIdx &&
+                      selectedArc?.sectorIndex === sIdx;
+
+                    // Calculate the position of the "Vertical Channel Gap"
+                    // This sits exactly between the end of this arch and the start of the next
+                    const channelAngle = (sIdx + 1) * step;
+                    const channelPos = polarToCartesian(
+                      CENTER,
+                      CENTER,
+                      r,
+                      channelAngle
+                    );
+
+                    return (
+                      <g key={`${lIdx}-${sIdx}`}>
+                        {/* THE ARCH */}
+                        <g
+                          className="cursor-pointer"
+                          onClick={() =>
+                            setSelectedArc({
+                              levelIndex: lIdx,
+                              sectorIndex: sIdx,
+                            })
+                          }
+                        >
+                          <path
+                            d={path.d}
+                            fill="none"
+                            stroke={arc.color}
+                            strokeWidth={config.levelThickness}
+                          />
+                          {isSelected && (
+                            <path
+                              d={path.d}
+                              fill="none"
+                              stroke="#3b82f6"
+                              strokeWidth={config.levelThickness + 4}
+                              strokeOpacity="0.3"
+                            />
+                          )}
+                          <path
+                            id={`p-${lIdx}-${sIdx}`}
+                            d={path.d}
+                            fill="none"
+                          />
+                          <text
+                            fill={arc.textColor}
+                            className="text-[14px] font-bold pointer-events-none"
+                          >
+                            <textPath
+                              href={`#p-${lIdx}-${sIdx}`}
+                              startOffset="50%"
+                              textAnchor="middle"
+                              dominantBaseline="middle"
+                            >
+                              {arc.text}
+                            </textPath>
+                          </text>
+                        </g>
+
+                        {/* --- THE SECTOR GAP (Vertical Channel between arches) --- */}
+                        <g
+                          transform={`rotate(${channelAngle}, ${CENTER}, ${CENTER})`}
+                        >
+                          <foreignObject
+                            x={CENTER - 20}
+                            /* Calculate y based on radius 'r' so it sits perfectly in the gap. 
+       Subtracting half thickness to center it vertically. 
+    */
+                            y={CENTER - r - config.levelThickness / 2}
+                            width="40"
+                            height={config.levelThickness}
+                            style={{ pointerEvents: "all" }}
+                          >
+                            <div className="w-full h-full flex items-center justify-center">
+                              <input
+                                className="w-full bg-transparent text-[10px] font-medium text-center outline-none border-none hover:bg-gray-100/30 focus:bg-white/80 rounded transition-all"
+                                placeholder="..."
+                                style={{
+                                  // This rotates the text 90 degrees so it reads bottom-to-top or top-to-bottom
+                                  transform: "rotate(90deg)",
+                                  whiteSpace: "nowrap",
+                                  width: `${config.levelThickness}px`, // Ensure the input is wide enough for the ring thickness
+                                }}
+                                value={
+                                  data.channelTexts[`${lIdx}-${sIdx}`] || ""
+                                }
+                                onChange={(e) =>
+                                  updateChannelText(lIdx, sIdx, e.target.value)
+                                }
+                              />
+                            </div>
+                          </foreignObject>
+                        </g>
+                      </g>
+                    );
+                  })}
+                </g>
+              );
             })}
 
             {/* Arrows */}
             {data.arrows.map((a) => {
-              // Calculate raw coordinates (without offset)
               const bStart = polarToCartesian(
                 CENTER,
                 CENTER,
@@ -625,8 +605,6 @@ export default function ConcentricDesigner() {
                 a.radius,
                 a.endAngle
               );
-
-              // Calculate screen coordinates (with offset) for the handles
               const handleStart = {
                 x: bStart.x + a.offsetX,
                 y: bStart.y + a.offsetY,
@@ -638,11 +616,10 @@ export default function ConcentricDesigner() {
 
               return (
                 <g key={a.id}>
-                  {/* GROUP 1: THE BODY (Only for Moving) */}
                   <g
                     transform={`translate(${a.offsetX}, ${a.offsetY})`}
                     className="cursor-move"
-                    onMouseDown={(e) => {
+                    onMouseDown={(e) =>
                       setDragState({
                         id: a.id,
                         mode: "move",
@@ -652,8 +629,8 @@ export default function ConcentricDesigner() {
                         initialOffsetY: a.offsetY,
                         initialAngle: 0,
                         baseAngle: 0,
-                      });
-                    }}
+                      })
+                    }
                   >
                     <path
                       d={
@@ -669,13 +646,12 @@ export default function ConcentricDesigner() {
                       }
                       fill="none"
                       stroke={a.color}
-                      strokeWidth="6" // Visual line
+                      strokeWidth="6"
                       markerEnd="url(#head-end)"
                       markerStart={
                         a.type === "double" ? "url(#head-start)" : ""
                       }
                     />
-                    {/* Wider invisible hitbox to make grabbing easier */}
                     <path
                       d={
                         a.type === "curved"
@@ -693,15 +669,13 @@ export default function ConcentricDesigner() {
                       strokeWidth="20"
                     />
                   </g>
-
-                  {/* GROUP 2: THE HANDLES (Only for Rotate/Resize) */}
                   <circle
                     cx={handleStart.x}
                     cy={handleStart.y}
-                    r="10"
+                    r="8"
                     className="fill-white stroke-blue-500 stroke-2 cursor-crosshair"
                     onMouseDown={(e) => {
-                      e.stopPropagation(); // STOP THE BODY DRAG
+                      e.stopPropagation();
                       setDragState({
                         id: a.id,
                         mode: "start",
@@ -717,10 +691,10 @@ export default function ConcentricDesigner() {
                   <circle
                     cx={handleEnd.x}
                     cy={handleEnd.y}
-                    r="10"
+                    r="8"
                     className="fill-white stroke-blue-500 stroke-2 cursor-crosshair"
                     onMouseDown={(e) => {
-                      e.stopPropagation(); // STOP THE BODY DRAG
+                      e.stopPropagation();
                       setDragState({
                         id: a.id,
                         mode: "end",
