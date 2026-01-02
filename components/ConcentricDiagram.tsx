@@ -189,6 +189,15 @@ export default function ConcentricDesigner() {
     }));
   };
 
+  // NEW FUNCTIONALITY: Remove Level
+  const removeLevel = (id: string) => {
+    setData((prev) => ({
+      ...prev,
+      levels: prev.levels.filter((lvl) => lvl.id !== id),
+    }));
+    setSelectedArc(null);
+  };
+
   const updateArc = (
     l: number,
     s: number,
@@ -260,6 +269,30 @@ export default function ConcentricDesigner() {
           <h3 className="text-xs font-bold text-gray-400 uppercase">
             Structure
           </h3>
+
+          {/* NEW: Level List with Delete Buttons */}
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold text-gray-400 uppercase">
+              Active Rings
+            </label>
+            <div className="max-h-40 overflow-y-auto space-y-1 pr-1">
+              {data.levels.map((lvl, idx) => (
+                <div
+                  key={lvl.id}
+                  className="flex items-center justify-between p-2 bg-gray-50 border rounded text-xs"
+                >
+                  <span>Ring {idx + 1}</span>
+                  <button
+                    onClick={() => removeLevel(lvl.id)}
+                    className="text-red-400 hover:text-red-600 transition-colors"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
           <div className="flex justify-between items-center">
             <label className="text-sm">Sectors</label>
             <input
@@ -299,8 +332,8 @@ export default function ConcentricDesigner() {
           </button>
         </div>
 
-        {/* --- ARC EDITOR (RESTORED) --- */}
-        {selectedArc ? (
+        {/* --- ARC EDITOR --- */}
+        {selectedArc && data.levels[selectedArc.levelIndex] ? (
           <div className="p-4 bg-gray-50 rounded-lg border space-y-3">
             <div className="flex justify-between items-center">
               <span className="text-xs font-bold">Edit Arch</span>
