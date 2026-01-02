@@ -84,7 +84,6 @@ export default function ConcentricDesigner() {
         ],
       },
     ],
-    // Store text for the gaps between arches (the "channels")
     channelTexts: {} as Record<string, string>,
     arrows: [] as ArrowData[],
   });
@@ -93,7 +92,7 @@ export default function ConcentricDesigner() {
     gapSize: 20,
     levelThickness: 60,
     centerRadius: 70,
-    arcPadding: 10, // Increased default padding to make gaps easier to click
+    arcPadding: 10,
   });
 
   const [selectedArc, setSelectedArc] = useState<{
@@ -175,16 +174,12 @@ export default function ConcentricDesigner() {
   }, [dragState, handleMouseMove]);
 
   // --- ACTIONS ---
-  const updateChannelText = (
-    levelIdx: number,
-    sectorIdx: number,
-    text: string
-  ) => {
+  const updateChannelText = (sectorIdx: number, text: string) => {
     setData((prev) => ({
       ...prev,
       channelTexts: {
         ...prev.channelTexts,
-        [`${levelIdx}-${sectorIdx}`]: text,
+        [`channel-${sectorIdx}`]: text,
       },
     }));
   };
@@ -474,7 +469,7 @@ export default function ConcentricDesigner() {
               </div>
             </foreignObject>
 
-            {/* Arches & Sector Gaps (Channels) */}
+            {/* Arches */}
             {data.levels.map((lvl, lIdx) => {
               const r =
                 config.centerRadius +
@@ -482,7 +477,6 @@ export default function ConcentricDesigner() {
                 lIdx * (config.levelThickness + config.gapSize) +
                 config.levelThickness / 2;
               const step = 360 / data.sectors;
-
               return (
                 <g key={lvl.id}>
                   {lvl.arcs.map((arc, sIdx) => {
@@ -492,101 +486,95 @@ export default function ConcentricDesigner() {
                     const isSelected =
                       selectedArc?.levelIndex === lIdx &&
                       selectedArc?.sectorIndex === sIdx;
-
-                    // Calculate the position of the "Vertical Channel Gap"
-                    // This sits exactly between the end of this arch and the start of the next
-                    const channelAngle = (sIdx + 1) * step;
-                    const channelPos = polarToCartesian(
-                      CENTER,
-                      CENTER,
-                      r,
-                      channelAngle
-                    );
-
                     return (
-                      <g key={`${lIdx}-${sIdx}`}>
-                        {/* THE ARCH */}
-                        <g
-                          className="cursor-pointer"
-                          onClick={() =>
-                            setSelectedArc({
-                              levelIndex: lIdx,
-                              sectorIndex: sIdx,
-                            })
-                          }
-                        >
+                      <g
+                        key={`${lIdx}-${sIdx}`}
+                        className="cursor-pointer"
+                        onClick={() =>
+                          setSelectedArc({
+                            levelIndex: lIdx,
+                            sectorIndex: sIdx,
+                          })
+                        }
+                      >
+                        <path
+                          d={path.d}
+                          fill="none"
+                          stroke={arc.color}
+                          strokeWidth={config.levelThickness}
+                        />
+                        {isSelected && (
                           <path
                             d={path.d}
                             fill="none"
-                            stroke={arc.color}
-                            strokeWidth={config.levelThickness}
+                            stroke="#3b82f6"
+                            strokeWidth={config.levelThickness + 4}
+                            strokeOpacity="0.3"
                           />
-                          {isSelected && (
-                            <path
-                              d={path.d}
-                              fill="none"
-                              stroke="#3b82f6"
-                              strokeWidth={config.levelThickness + 4}
-                              strokeOpacity="0.3"
-                            />
-                          )}
-                          <path
-                            id={`p-${lIdx}-${sIdx}`}
-                            d={path.d}
-                            fill="none"
-                          />
-                          <text
-                            fill={arc.textColor}
-                            className="text-[14px] font-bold pointer-events-none"
-                          >
-                            <textPath
-                              href={`#p-${lIdx}-${sIdx}`}
-                              startOffset="50%"
-                              textAnchor="middle"
-                              dominantBaseline="middle"
-                            >
-                              {arc.text}
-                            </textPath>
-                          </text>
-                        </g>
-
-                        {/* --- THE SECTOR GAP (Vertical Channel between arches) --- */}
-                        <g
-                          transform={`rotate(${channelAngle}, ${CENTER}, ${CENTER})`}
+                        )}
+                        <path id={`p-${lIdx}-${sIdx}`} d={path.d} fill="none" />
+                        <text
+                          fill={arc.textColor}
+                          className="text-[14px] font-bold pointer-events-none"
                         >
-                          <foreignObject
-                            x={CENTER - 20}
-                            /* Calculate y based on radius 'r' so it sits perfectly in the gap. 
-       Subtracting half thickness to center it vertically. 
-    */
-                            y={CENTER - r - config.levelThickness / 2}
-                            width="40"
-                            height={config.levelThickness}
-                            style={{ pointerEvents: "all" }}
+                          <textPath
+                            href={`#p-${lIdx}-${sIdx}`}
+                            startOffset="50%"
+                            textAnchor="middle"
+                            dominantBaseline="middle"
                           >
-                            <div className="w-full h-full flex items-center justify-center">
-                              <input
-                                className="w-full bg-transparent text-[10px] font-medium text-center outline-none border-none hover:bg-gray-100/30 focus:bg-white/80 rounded transition-all"
-                                placeholder="..."
-                                style={{
-                                  // This rotates the text 90 degrees so it reads bottom-to-top or top-to-bottom
-                                  transform: "rotate(90deg)",
-                                  whiteSpace: "nowrap",
-                                  width: `${config.levelThickness}px`, // Ensure the input is wide enough for the ring thickness
-                                }}
-                                value={
-                                  data.channelTexts[`${lIdx}-${sIdx}`] || ""
-                                }
-                                onChange={(e) =>
-                                  updateChannelText(lIdx, sIdx, e.target.value)
-                                }
-                              />
-                            </div>
-                          </foreignObject>
-                        </g>
+                            {arc.text}
+                          </textPath>
+                        </text>
                       </g>
                     );
                   })}
+                </g>
+              );
+            })}
+
+            {/* Continuous Sector Gaps - BOTTOM TO UPWARDS */}
+            {Array.from({ length: data.sectors }).map((_, sIdx) => {
+              const step = 360 / data.sectors;
+              const channelAngle = (sIdx + 1) * step;
+              const totalLevels = data.levels.length;
+
+              // Define exact start and end of the channel area
+              const innerBoundary = config.centerRadius + config.gapSize;
+              const outerBoundary =
+                config.centerRadius +
+                totalLevels * (config.levelThickness + config.gapSize);
+              const channelLength = outerBoundary - innerBoundary;
+
+              return (
+                <g
+                  key={`channel-grp-${sIdx}`}
+                  transform={`rotate(${channelAngle}, ${CENTER}, ${CENTER})`}
+                >
+                  <foreignObject
+                    x={CENTER - 20}
+                    y={CENTER - outerBoundary}
+                    width="40"
+                    height={channelLength}
+                    style={{ pointerEvents: "all" }}
+                  >
+                    <div className="w-full h-full flex items-center justify-center">
+                      <input
+                        className="w-full bg-transparent text-[11px] font-bold text-center outline-none border-none hover:bg-gray-100/30 focus:bg-white/80 rounded transition-all"
+                        placeholder="..."
+                        style={{
+                          // -90deg rotation makes text read from center to edge (bottom-to-up)
+                          transform: "rotate(-90deg)",
+                          width: `${channelLength}px`,
+                          whiteSpace: "nowrap",
+                        }}
+                        value={data.channelTexts[`channel-${sIdx}`] || ""}
+                        onChange={(e) =>
+                          updateChannelText(sIdx, e.target.value)
+                        }
+                      />
+                    </div>
+                  </foreignObject>
                 </g>
               );
             })}
@@ -613,7 +601,6 @@ export default function ConcentricDesigner() {
                 x: bEnd.x + a.offsetX,
                 y: bEnd.y + a.offsetY,
               };
-
               return (
                 <g key={a.id}>
                   <g
@@ -651,22 +638,6 @@ export default function ConcentricDesigner() {
                       markerStart={
                         a.type === "double" ? "url(#head-start)" : ""
                       }
-                    />
-                    <path
-                      d={
-                        a.type === "curved"
-                          ? describeTextArc(
-                              CENTER,
-                              CENTER,
-                              a.radius,
-                              a.startAngle,
-                              a.endAngle
-                            ).d
-                          : `M ${bStart.x} ${bStart.y} L ${bEnd.x} ${bEnd.y}`
-                      }
-                      fill="none"
-                      stroke="transparent"
-                      strokeWidth="20"
                     />
                   </g>
                   <circle
