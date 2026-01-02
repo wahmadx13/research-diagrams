@@ -127,13 +127,15 @@ export default function ConcentricDesigner() {
   // --- MOUSE LOGIC ---
   const handleMouseMove = useCallback(
     (e: MouseEvent) => {
-      if (!dragState) return;
+      if (!dragState || !svgRef.current) return;
       const arrow = data.arrows.find((a) => a.id === dragState.id);
       if (!arrow) return;
 
+      const rect = svgRef.current.getBoundingClientRect();
+      const scale = SVG_SIZE / rect.width;
+
+      // 1. DRAG BODY MODE: Only updates the X/Y position
       if (dragState.mode === "move") {
-        const scale =
-          SVG_SIZE / (svgRef.current?.getBoundingClientRect().width || 1);
         const dx = (e.clientX - dragState.initialMouseX) * scale;
         const dy = (e.clientY - dragState.initialMouseY) * scale;
         setData((prev) => ({
@@ -148,21 +150,32 @@ export default function ConcentricDesigner() {
               : a
           ),
         }));
-      } else {
-        const currentMouseAngle = getAngle(e.clientX, e.clientY, arrow);
-        const deltaAngle = currentMouseAngle - dragState.initialAngle;
-        const newAngle = (dragState.baseAngle + deltaAngle) % 360;
-
-        setData((prev) => ({
-          ...prev,
-          arrows: prev.arrows.map((a) => {
-            if (a.id !== dragState.id) return a;
-            return dragState.mode === "start"
-              ? { ...a, startAngle: newAngle }
-              : { ...a, endAngle: newAngle };
-          }),
-        }));
+        return;
       }
+
+      // 2. ROTATE/RESIZE MODE: Updates Angle and Radius
+      // IMPORTANT: We subtract the offset from the mouse position
+      // to keep the arrow "anchored" in its current place.
+      const mouseX = (e.clientX - rect.left) * scale;
+      const mouseY = (e.clientY - rect.top) * scale;
+
+      const relativeX = mouseX - (CENTER + arrow.offsetX);
+      const relativeY = mouseY - (CENTER + arrow.offsetY);
+
+      const newAngle = (Math.atan2(relativeY, relativeX) * 180) / Math.PI + 90;
+      const newRadius = Math.sqrt(
+        relativeX * relativeX + relativeY * relativeY
+      );
+
+      setData((prev) => ({
+        ...prev,
+        arrows: prev.arrows.map((a) => {
+          if (a.id !== dragState.id) return a;
+          return dragState.mode === "start"
+            ? { ...a, startAngle: newAngle, radius: newRadius }
+            : { ...a, endAngle: newAngle, radius: newRadius };
+        }),
+      }));
     },
     [dragState, data.arrows]
   );
@@ -599,6 +612,7 @@ export default function ConcentricDesigner() {
 
             {/* Arrows */}
             {data.arrows.map((a) => {
+              // Calculate raw coordinates (without offset)
               const bStart = polarToCartesian(
                 CENTER,
                 CENTER,
@@ -611,124 +625,113 @@ export default function ConcentricDesigner() {
                 a.radius,
                 a.endAngle
               );
-              const sP = { x: bStart.x + a.offsetX, y: bStart.y + a.offsetY };
-              const eP = { x: bEnd.x + a.offsetX, y: bEnd.y + a.offsetY };
 
-              const startMove = (e: React.MouseEvent) => {
-                e.stopPropagation();
-                setDragState({
-                  id: a.id,
-                  mode: "move",
-                  initialMouseX: e.clientX,
-                  initialMouseY: e.clientY,
-                  initialOffsetX: a.offsetX,
-                  initialOffsetY: a.offsetY,
-                  initialAngle: 0,
-                  baseAngle: 0,
-                });
+              // Calculate screen coordinates (with offset) for the handles
+              const handleStart = {
+                x: bStart.x + a.offsetX,
+                y: bStart.y + a.offsetY,
               };
-
-              const startRotate = (
-                e: React.MouseEvent,
-                mode: "start" | "end"
-              ) => {
-                e.stopPropagation();
-                setDragState({
-                  id: a.id,
-                  mode,
-                  initialMouseX: 0,
-                  initialMouseY: 0,
-                  initialOffsetX: a.offsetX,
-                  initialOffsetY: a.offsetY,
-                  initialAngle: getAngle(e.clientX, e.clientY, a),
-                  baseAngle: mode === "start" ? a.startAngle : a.endAngle,
-                });
+              const handleEnd = {
+                x: bEnd.x + a.offsetX,
+                y: bEnd.y + a.offsetY,
               };
 
               return (
-                <g key={a.id} style={{ color: a.color }} className="group">
+                <g key={a.id}>
+                  {/* GROUP 1: THE BODY (Only for Moving) */}
                   <g
                     transform={`translate(${a.offsetX}, ${a.offsetY})`}
-                    onMouseDown={startMove}
                     className="cursor-move"
+                    onMouseDown={(e) => {
+                      setDragState({
+                        id: a.id,
+                        mode: "move",
+                        initialMouseX: e.clientX,
+                        initialMouseY: e.clientY,
+                        initialOffsetX: a.offsetX,
+                        initialOffsetY: a.offsetY,
+                        initialAngle: 0,
+                        baseAngle: 0,
+                      });
+                    }}
                   >
-                    {a.type === "curved" ? (
-                      <path
-                        d={
-                          describeTextArc(
-                            CENTER,
-                            CENTER,
-                            a.radius,
-                            a.startAngle,
-                            a.endAngle
-                          ).d
-                        }
-                        fill="none"
-                        stroke="transparent"
-                        strokeWidth="20"
-                      />
-                    ) : (
-                      <line
-                        x1={bStart.x}
-                        y1={bStart.y}
-                        x2={bEnd.x}
-                        y2={bEnd.y}
-                        stroke="transparent"
-                        strokeWidth="20"
-                      />
-                    )}
+                    <path
+                      d={
+                        a.type === "curved"
+                          ? describeTextArc(
+                              CENTER,
+                              CENTER,
+                              a.radius,
+                              a.startAngle,
+                              a.endAngle
+                            ).d
+                          : `M ${bStart.x} ${bStart.y} L ${bEnd.x} ${bEnd.y}`
+                      }
+                      fill="none"
+                      stroke={a.color}
+                      strokeWidth="6" // Visual line
+                      markerEnd="url(#head-end)"
+                      markerStart={
+                        a.type === "double" ? "url(#head-start)" : ""
+                      }
+                    />
+                    {/* Wider invisible hitbox to make grabbing easier */}
+                    <path
+                      d={
+                        a.type === "curved"
+                          ? describeTextArc(
+                              CENTER,
+                              CENTER,
+                              a.radius,
+                              a.startAngle,
+                              a.endAngle
+                            ).d
+                          : `M ${bStart.x} ${bStart.y} L ${bEnd.x} ${bEnd.y}`
+                      }
+                      fill="none"
+                      stroke="transparent"
+                      strokeWidth="20"
+                    />
                   </g>
-                  <g
-                    transform={`translate(${a.offsetX}, ${a.offsetY})`}
-                    className="pointer-events-none"
-                  >
-                    {a.type === "curved" ? (
-                      <path
-                        d={
-                          describeTextArc(
-                            CENTER,
-                            CENTER,
-                            a.radius,
-                            a.startAngle,
-                            a.endAngle
-                          ).d
-                        }
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="3"
-                        markerEnd="url(#head-end)"
-                        markerStart={
-                          a.type === "double" ? "url(#head-start)" : ""
-                        }
-                      />
-                    ) : (
-                      <line
-                        x1={bStart.x}
-                        y1={bStart.y}
-                        x2={bEnd.x}
-                        y2={bEnd.y}
-                        stroke="currentColor"
-                        strokeWidth="3"
-                        markerEnd="url(#head-end)"
-                        markerStart={
-                          a.type === "double" ? "url(#head-start)" : ""
-                        }
-                      />
-                    )}
-                  </g>
+
+                  {/* GROUP 2: THE HANDLES (Only for Rotate/Resize) */}
                   <circle
-                    cx={sP.x}
-                    cy={sP.y}
-                    r="8"
-                    className="fill-white stroke-current cursor-crosshair opacity-0 group-hover:opacity-100 transition-opacity"
-                    onMouseDown={(e) => startRotate(e, "start")}
+                    cx={handleStart.x}
+                    cy={handleStart.y}
+                    r="10"
+                    className="fill-white stroke-blue-500 stroke-2 cursor-crosshair"
+                    onMouseDown={(e) => {
+                      e.stopPropagation(); // STOP THE BODY DRAG
+                      setDragState({
+                        id: a.id,
+                        mode: "start",
+                        initialMouseX: 0,
+                        initialMouseY: 0,
+                        initialOffsetX: a.offsetX,
+                        initialOffsetY: a.offsetY,
+                        initialAngle: 0,
+                        baseAngle: 0,
+                      });
+                    }}
                   />
                   <circle
-                    cx={eP.x}
-                    cy={eP.y}
-                    r="8"
-                    className="fill-white stroke-current cursor-crosshair opacity-0 group-hover:opacity-100 transition-opacity"
-                    onMouseDown={(e) => startRotate(e, "end")}
+                    cx={handleEnd.x}
+                    cy={handleEnd.y}
+                    r="10"
+                    className="fill-white stroke-blue-500 stroke-2 cursor-crosshair"
+                    onMouseDown={(e) => {
+                      e.stopPropagation(); // STOP THE BODY DRAG
+                      setDragState({
+                        id: a.id,
+                        mode: "end",
+                        initialMouseX: 0,
+                        initialMouseY: 0,
+                        initialOffsetX: a.offsetX,
+                        initialOffsetY: a.offsetY,
+                        initialAngle: 0,
+                        baseAngle: 0,
+                      });
+                    }}
                   />
                 </g>
               );
