@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import { Download, Plus, Trash2 } from "lucide-react";
+import { Download, Plus, Trash2, type LucideIcon } from "lucide-react";
 
 // --- GEOMETRY UTILS ---
 const polarToCartesian = (
@@ -85,6 +85,8 @@ export default function ConcentricDesigner() {
       },
     ],
     channelTexts: {} as Record<string, string>,
+    // New state to store labels that follow the outermost arch
+    outermostLabels: ["Label A", "Label B", "Label C"] as string[],
     arrows: [] as ArrowData[],
   });
 
@@ -184,6 +186,12 @@ export default function ConcentricDesigner() {
     }));
   };
 
+  const updateOuterLabel = (sectorIdx: number, text: string) => {
+    const newLabels = [...data.outermostLabels];
+    newLabels[sectorIdx] = text;
+    setData((prev) => ({ ...prev, outermostLabels: newLabels }));
+  };
+
   const addLevel = () => {
     const newArcs = Array(data.sectors)
       .fill(null)
@@ -215,23 +223,30 @@ export default function ConcentricDesigner() {
 
   const updateSectorCount = (count: number) => {
     const n = Math.max(1, Math.min(12, count));
-    setData((prev) => ({
-      ...prev,
-      sectors: n,
-      levels: prev.levels.map((lvl) => ({
-        ...lvl,
-        arcs: Array(n)
-          .fill(null)
-          .map(
-            (_, i) =>
-              lvl.arcs[i] || {
-                text: "New",
-                color: "#e2e8f0",
-                textColor: "#333",
-              }
-          ),
-      })),
-    }));
+    setData((prev) => {
+      const newLabels = [...prev.outermostLabels];
+      while (newLabels.length < n)
+        newLabels.push(`Label ${newLabels.length + 1}`);
+
+      return {
+        ...prev,
+        sectors: n,
+        outermostLabels: newLabels.slice(0, n),
+        levels: prev.levels.map((lvl) => ({
+          ...lvl,
+          arcs: Array(n)
+            .fill(null)
+            .map(
+              (_, i) =>
+                lvl.arcs[i] || {
+                  text: "New",
+                  color: "#e2e8f0",
+                  textColor: "#333",
+                }
+            ),
+        })),
+      };
+    });
   };
 
   const downloadPNG = useCallback(() => {
@@ -296,35 +311,62 @@ export default function ConcentricDesigner() {
           </div>
 
           <div className="flex justify-between items-center">
-            <label className="text-sm">Sectors</label>
+            <label className="text-sm font-semibold">Sectors</label>
             <input
               type="number"
               value={data.sectors}
               onChange={(e) => updateSectorCount(parseInt(e.target.value))}
-              className="w-16 border rounded p-1"
+              className="w-16 border rounded p-1 text-center"
             />
           </div>
+
+          {/* New Section for Outermost Labels */}
           <div className="space-y-2">
-            <label className="text-[10px]">Arch Gap (Horizontal Width)</label>
-            <input
-              type="range"
-              min="2"
-              max="40"
-              value={config.arcPadding}
-              onChange={(e) =>
-                setConfig({ ...config, arcPadding: parseInt(e.target.value) })
-              }
-              className="w-full"
-            />
-            <label className="text-[10px]">Ring Gap (Vertical)</label>
-            <input
-              type="range"
-              value={config.gapSize}
-              onChange={(e) =>
-                setConfig({ ...config, gapSize: parseInt(e.target.value) })
-              }
-              className="w-full"
-            />
+            <label className="text-[10px] font-bold text-gray-400 uppercase">
+              Outermost Curved Labels
+            </label>
+            <div className="space-y-1">
+              {data.outermostLabels.map((label, idx) => (
+                <input
+                  key={`label-input-${idx}`}
+                  type="text"
+                  value={label}
+                  onChange={(e) => updateOuterLabel(idx, e.target.value)}
+                  placeholder={`Sector ${idx + 1} Outer Label`}
+                  className="w-full text-xs p-2 border rounded bg-gray-50"
+                />
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-2 pt-2 border-t">
+            <label className="text-[10px] font-bold text-gray-400 uppercase">
+              Spacing
+            </label>
+            <div className="space-y-1">
+              <label className="text-[10px]">Arch Gap</label>
+              <input
+                type="range"
+                min="2"
+                max="40"
+                value={config.arcPadding}
+                onChange={(e) =>
+                  setConfig({ ...config, arcPadding: parseInt(e.target.value) })
+                }
+                className="w-full"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px]">Ring Gap</label>
+              <input
+                type="range"
+                value={config.gapSize}
+                onChange={(e) =>
+                  setConfig({ ...config, gapSize: parseInt(e.target.value) })
+                }
+                className="w-full"
+              />
+            </div>
           </div>
           <button
             onClick={addLevel}
@@ -336,7 +378,7 @@ export default function ConcentricDesigner() {
 
         {selectedArc && data.levels[selectedArc.levelIndex] ? (
           <div className="p-4 bg-gray-50 rounded-lg border space-y-3">
-            <span className="text-xs font-bold">Edit Arch</span>
+            <span className="text-xs font-bold">Edit Arch Content</span>
             <textarea
               className="w-full p-2 text-sm border rounded"
               rows={2}
@@ -469,20 +511,34 @@ export default function ConcentricDesigner() {
               </div>
             </foreignObject>
 
-            {/* Arches */}
+            {/* Arches Rendering */}
             {data.levels.map((lvl, lIdx) => {
               const r =
                 config.centerRadius +
                 config.gapSize +
                 lIdx * (config.levelThickness + config.gapSize) +
                 config.levelThickness / 2;
+
               const step = 360 / data.sectors;
+              const isOuterMostLevel = lIdx === data.levels.length - 1;
+
               return (
                 <g key={lvl.id}>
                   {lvl.arcs.map((arc, sIdx) => {
                     const s = sIdx * step + config.arcPadding / 2;
                     const e = (sIdx + 1) * step - config.arcPadding / 2;
                     const path = describeTextArc(CENTER, CENTER, r, s, e);
+
+                    // Path for label sitting on top of the arch
+                    const labelRadius = r + config.levelThickness / 2 + 12;
+                    const labelPath = describeTextArc(
+                      CENTER,
+                      CENTER,
+                      labelRadius,
+                      s,
+                      e
+                    );
+
                     const isSelected =
                       selectedArc?.levelIndex === lIdx &&
                       selectedArc?.sectorIndex === sIdx;
@@ -526,6 +582,30 @@ export default function ConcentricDesigner() {
                             {arc.text}
                           </textPath>
                         </text>
+
+                        {/* DYNAMIC TOP LABEL - Only render if this is the last level */}
+                        {isOuterMostLevel && (
+                          <>
+                            <path
+                              id={`outer-label-p-${sIdx}`}
+                              d={labelPath.d}
+                              fill="none"
+                            />
+                            <text
+                              fill="#64748b"
+                              className="text-[12px] font-bold pointer-events-none uppercase tracking-wide"
+                            >
+                              <textPath
+                                href={`#outer-label-p-${sIdx}`}
+                                startOffset="50%"
+                                textAnchor="middle"
+                                dominantBaseline="middle"
+                              >
+                                {data.outermostLabels[sIdx] || ""}
+                              </textPath>
+                            </text>
+                          </>
+                        )}
                       </g>
                     );
                   })}
@@ -533,13 +613,12 @@ export default function ConcentricDesigner() {
               );
             })}
 
-            {/* Continuous Sector Gaps - BOTTOM TO UPWARDS */}
+            {/* Continuous Sector Gaps */}
             {Array.from({ length: data.sectors }).map((_, sIdx) => {
               const step = 360 / data.sectors;
               const channelAngle = (sIdx + 1) * step;
               const totalLevels = data.levels.length;
 
-              // Define exact start and end of the channel area
               const innerBoundary = config.centerRadius + config.gapSize;
               const outerBoundary =
                 config.centerRadius +
@@ -563,7 +642,6 @@ export default function ConcentricDesigner() {
                         className="w-full bg-transparent text-[11px] font-bold text-center outline-none border-none hover:bg-gray-100/30 focus:bg-white/80 rounded transition-all"
                         placeholder="..."
                         style={{
-                          // -90deg rotation makes text read from center to edge (bottom-to-up)
                           transform: "rotate(-90deg)",
                           width: `${channelLength}px`,
                           whiteSpace: "nowrap",
