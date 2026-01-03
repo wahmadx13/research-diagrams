@@ -40,7 +40,7 @@ export function DoubleCurvedArrow({
           markerHeight="12"
           refX="10"
           refY="6"
-          orient="auto-start-reverse" // Key feature: Auto-rotates for start and end
+          orient="auto-start-reverse"
           markerUnits="userSpaceOnUse"
         >
           <path d="M0,0 L12,6 L0,12 L3,6 Z" fill={color} />

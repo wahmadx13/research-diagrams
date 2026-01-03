@@ -52,11 +52,22 @@ export function ShapeConfigPanel({
             type="number"
             className="w-full text-xs p-1 border rounded"
             value={Math.round(shape.size.height)}
-            onChange={(e) =>
-              onUpdate({
-                size: { ...shape.size, height: parseInt(e.target.value) || 0 },
-              })
-            }
+            onChange={(e) => {
+              const newHeight = parseInt(e.target.value) || 0;
+              const updates: Partial<ShapeData> = {
+                size: { ...shape.size, height: newHeight },
+              };
+              if (
+                shape.type === "single-curved" ||
+                shape.type === "double-curved"
+              ) {
+                const heightScale = newHeight / shape.size.height;
+                const currentCurveAmount =
+                  shape.curveAmount ?? -shape.size.height * 0.5;
+                updates.curveAmount = currentCurveAmount * heightScale;
+              }
+              onUpdate(updates);
+            }}
             min="20"
           />
         </div>
@@ -84,14 +95,14 @@ export function ShapeConfigPanel({
             type="range"
             min={-shape.size.height * 0.8}
             max={shape.size.height * 0.8}
-            value={shape.curveHeight ?? -shape.size.height * 0.5}
+            value={shape.curveAmount ?? -shape.size.height * 0.5}
             onChange={(e) =>
-              onUpdate({ curveHeight: parseFloat(e.target.value) })
+              onUpdate({ curveAmount: parseFloat(e.target.value) })
             }
             className="w-full"
           />
           <div className="text-xs text-center text-gray-500 mt-1">
-            {Math.round(shape.curveHeight ?? -shape.size.height * 0.5)}
+            {Math.round(shape.curveAmount ?? -shape.size.height * 0.5)}
           </div>
         </div>
       )}

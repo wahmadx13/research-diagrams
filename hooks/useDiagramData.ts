@@ -121,14 +121,19 @@ export function useDiagramData() {
   };
 
   const addShape = (type: ShapeType) => {
+    const offsetX = 200;
+    const offsetY = 150;
+    const initialHeight = 40;
     const newShape: ShapeData = {
       id: `shape-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       type,
-      position: { x: 500, y: 500 },
+      position: { x: offsetX, y: offsetY },
       rotation: 0,
-      size: { width: 100, height: 30 },
+      size: { width: 120, height: initialHeight },
       color: "#3b82f6",
-      ...(type === "double-curved" && { curveHeight: -15 }),
+      ...((type === "single-curved" || type === "double-curved") && {
+        curveAmount: -initialHeight * 0.5,
+      }),
     };
     setData((prev) => ({
       ...prev,

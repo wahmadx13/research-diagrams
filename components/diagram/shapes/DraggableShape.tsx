@@ -49,23 +49,43 @@ export function DraggableShape({
       if (!svgRef.current || !dragStartRef.current || !initialShapeRef.current)
         return;
 
+      e.preventDefault();
       const svgPoint = getSVGPoint(svgRef.current, e.clientX, e.clientY);
 
       if (isRotating) {
         const center = initialShapeRef.current.position;
-        const angle = calculateAngle(center, svgPoint);
-        onUpdate({ rotation: angle });
+        const initialAngle = calculateAngle(center, dragStartRef.current);
+        const currentAngle = calculateAngle(center, svgPoint);
+        const rotationDelta = currentAngle - initialAngle;
+        const newRotation = initialShapeRef.current.rotation + rotationDelta;
+        onUpdate({ rotation: newRotation });
       } else if (isResizing) {
         const center = initialShapeRef.current.position;
-        const distance = calculateDistance(center, svgPoint);
-        const newWidth = Math.max(50, distance * 2);
-        const aspectRatio =
-          initialShapeRef.current.size.width /
-          initialShapeRef.current.size.height;
-        const newHeight = newWidth / aspectRatio;
-        onUpdate({
-          size: { width: newWidth, height: Math.max(20, newHeight) },
-        });
+        const initialDistance = calculateDistance(center, dragStartRef.current);
+        const currentDistance = calculateDistance(center, svgPoint);
+        const scale = currentDistance / initialDistance;
+        const newWidth = Math.max(
+          50,
+          initialShapeRef.current.size.width * scale
+        );
+        const newHeight = Math.max(
+          20,
+          initialShapeRef.current.size.height * scale
+        );
+        const updates: Partial<ShapeData> = {
+          size: { width: newWidth, height: newHeight },
+        };
+        if (
+          initialShapeRef.current.type === "single-curved" ||
+          initialShapeRef.current.type === "double-curved"
+        ) {
+          const heightScale = newHeight / initialShapeRef.current.size.height;
+          const currentCurveAmount =
+            initialShapeRef.current.curveAmount ??
+            -initialShapeRef.current.size.height * 0.5;
+          updates.curveAmount = currentCurveAmount * heightScale;
+        }
+        onUpdate(updates);
       } else if (isDragging) {
         const dx = svgPoint.x - dragStartRef.current.x;
         const dy = svgPoint.y - dragStartRef.current.y;
@@ -125,11 +145,23 @@ export function DraggableShape({
 
   useEffect(() => {
     if (isDragging || isResizing || isRotating) {
-      window.addEventListener("mousemove", handleMouseMove);
+      const handleMove = (e: MouseEvent) => {
+        e.preventDefault();
+        handleMouseMove(e);
+      };
+      window.addEventListener("mousemove", handleMove, { passive: false });
       window.addEventListener("mouseup", handleMouseUp);
+      document.body.style.cursor = isDragging
+        ? "grabbing"
+        : isResizing
+        ? "nwse-resize"
+        : "grab";
+      document.body.style.userSelect = "none";
       return () => {
-        window.removeEventListener("mousemove", handleMouseMove);
+        window.removeEventListener("mousemove", handleMove);
         window.removeEventListener("mouseup", handleMouseUp);
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
       };
     }
   }, [isDragging, isResizing, isRotating, handleMouseMove, handleMouseUp]);

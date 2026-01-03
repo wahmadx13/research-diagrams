@@ -5,7 +5,7 @@ interface SingleCurvedArrowProps {
   height: number;
   color?: string;
   strokeWidth?: number;
-  curveAmount?: number; // Optional: Control how deep the curve is
+  curveAmount?: number;
 }
 
 export function SingleCurvedArrow({
@@ -18,20 +18,15 @@ export function SingleCurvedArrow({
   const id = useId();
   const markerId = `arrowhead-${id}`;
 
-  // Padding ensures the stroke/arrowhead doesn't get cut off by the SVG box
   const padding = 15;
-  const effectiveWidth = width - padding * 2;
 
-  // Calculate curve depth
-  const curveDepth = curveAmount ?? height * 0.6; // Default to 60% of height if not specified
+  const curveDepth = curveAmount ?? height * 0.6;
 
-  // Path points
   const startX = padding;
-  const startY = height / 2 + curveDepth * 0.2; // Start slightly lower/higher depending on curve
+  const startY = height / 2 + curveDepth * 0.2;
   const endX = width - padding;
   const endY = height / 2 + curveDepth * 0.2;
 
-  // Control point for Quadratic Bezier (Q)
   const controlX = width / 2;
   const controlY = height / 2 - curveDepth;
 
@@ -44,12 +39,11 @@ export function SingleCurvedArrow({
           id={markerId}
           markerWidth="12"
           markerHeight="12"
-          refX="10" // Adjusts where the line connects to the arrow (tip)
+          refX="10"
           refY="6"
           orient="auto"
           markerUnits="userSpaceOnUse"
         >
-          {/* A premium 'swept back' arrow shape */}
           <path d="M0,0 L12,6 L0,12 L3,6 Z" fill={color} />
         </marker>
       </defs>
@@ -60,7 +54,7 @@ export function SingleCurvedArrow({
         strokeWidth={strokeWidth}
         fill="none"
         strokeLinecap="round"
-        markerEnd={`url(#${markerId})`} // Attaches the marker to the end
+        markerEnd={`url(#${markerId})`}
       />
     </svg>
   );

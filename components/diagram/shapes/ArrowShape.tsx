@@ -26,6 +26,7 @@ export function ArrowShape({ shape }: ArrowShapeProps) {
           width={size.width}
           height={size.height}
           color={color}
+          curveAmount={shape.curveAmount}
         />
       );
     case "double-curved":
@@ -34,7 +35,7 @@ export function ArrowShape({ shape }: ArrowShapeProps) {
           width={size.width}
           height={size.height}
           color={color}
-          curveHeight={shape.curveHeight}
+          curveAmount={shape.curveAmount}
         />
       );
     default:
