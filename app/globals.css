@@ -37,10 +37,17 @@ input[type="range"]::-webkit-slider-thumb {
   height: 18px;
   border-radius: 50%;
   background: #3b82f6;
-  cursor: pointer;
+  cursor: grab;
   border: 2px solid #ffffff;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   transition: all 0.2s ease;
+}
+
+input[type="range"]::-webkit-slider-thumb:active {
+  cursor: grabbing;
+  background: #2563eb;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+  transform: scale(1.1);
 }
 
 input[type="range"]::-webkit-slider-thumb:hover {
@@ -54,10 +61,17 @@ input[type="range"]::-moz-range-thumb {
   height: 18px;
   border-radius: 50%;
   background: #3b82f6;
-  cursor: pointer;
+  cursor: grab;
   border: 2px solid #ffffff;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   transition: all 0.2s ease;
+}
+
+input[type="range"]::-moz-range-thumb:active {
+  cursor: grabbing;
+  background: #2563eb;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+  transform: scale(1.1);
 }
 
 input[type="range"]::-moz-range-thumb:hover {

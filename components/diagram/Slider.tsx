@@ -90,7 +90,7 @@ export function Slider({
         </div>
       </div>
       <div className="relative">
-        <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+        <div className="h-2 bg-gray-200 rounded-full overflow-hidden pointer-events-none">
           <div
             className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full transition-all duration-150"
             style={{ width: `${percentage}%` }}
@@ -108,10 +108,11 @@ export function Slider({
           onMouseUp={() => {
             setIsEditing(false);
           }}
-          className="absolute inset-0 w-full h-2 opacity-0 cursor-pointer"
+          className="absolute inset-0 w-full h-2 opacity-0 cursor-grab active:cursor-grabbing z-10"
+          style={{ WebkitAppearance: "none", appearance: "none" }}
         />
         <div
-          className="absolute top-1/2 -translate-y-1/2 w-5 h-5 bg-white border-2 border-blue-500 rounded-full shadow-lg transform transition-transform hover:scale-110"
+          className="absolute top-1/2 -translate-y-1/2 w-5 h-5 bg-white border-2 border-blue-500 rounded-full shadow-lg transform transition-transform hover:scale-110 pointer-events-none z-0"
           style={{ left: `calc(${percentage}% - 10px)` }}
         />
       </div>
