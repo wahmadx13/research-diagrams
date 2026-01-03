@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import { Download, Plus, Trash2, type LucideIcon } from "lucide-react";
+import { Download, Plus, Trash2 } from "lucide-react";
 
 // --- GEOMETRY UTILS ---
 const polarToCartesian = (
@@ -70,7 +70,6 @@ const SVG_SIZE = 1000;
 const CENTER = SVG_SIZE / 2;
 
 export default function ConcentricDesigner() {
-  // --- STATE ---
   const [data, setData] = useState({
     centerText: "Center\nTopic",
     sectors: 3,
@@ -85,7 +84,6 @@ export default function ConcentricDesigner() {
       },
     ],
     channelTexts: {} as Record<string, string>,
-    // New state to store labels that follow the outermost arch
     outermostLabels: ["Label A", "Label B", "Label C"] as string[],
     arrows: [] as ArrowData[],
   });
@@ -108,8 +106,6 @@ export default function ConcentricDesigner() {
     initialMouseY: number;
     initialOffsetX: number;
     initialOffsetY: number;
-    initialAngle: number;
-    baseAngle: number;
   } | null>(null);
 
   const svgRef = useRef<SVGSVGElement>(null);
@@ -179,10 +175,7 @@ export default function ConcentricDesigner() {
   const updateChannelText = (sectorIdx: number, text: string) => {
     setData((prev) => ({
       ...prev,
-      channelTexts: {
-        ...prev.channelTexts,
-        [`channel-${sectorIdx}`]: text,
-      },
+      channelTexts: { ...prev.channelTexts, [`channel-${sectorIdx}`]: text },
     }));
   };
 
@@ -227,7 +220,6 @@ export default function ConcentricDesigner() {
       const newLabels = [...prev.outermostLabels];
       while (newLabels.length < n)
         newLabels.push(`Label ${newLabels.length + 1}`);
-
       return {
         ...prev,
         sectors: n,
@@ -275,43 +267,30 @@ export default function ConcentricDesigner() {
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden font-sans text-gray-900">
-      {/* --- SIDEBAR --- */}
       <div className="w-80 bg-white border-r p-5 overflow-y-auto flex flex-col gap-6 shadow-sm">
-        <div>
-          <h1 className="text-xl font-bold">Diagram Studio</h1>
-          <p className="text-xs text-gray-400 uppercase tracking-tighter">
-            Pro Editor
-          </p>
-        </div>
-
+        <h1 className="text-xl font-bold">Diagram Studio</h1>
         <div className="space-y-4">
-          <h3 className="text-xs font-bold text-gray-400 uppercase">
-            Structure
-          </h3>
-          <div className="space-y-2">
-            <label className="text-[10px] font-bold text-gray-400 uppercase">
-              Active Rings
-            </label>
-            <div className="max-h-40 overflow-y-auto space-y-1 pr-1">
-              {data.levels.map((lvl, idx) => (
-                <div
-                  key={lvl.id}
-                  className="flex items-center justify-between p-2 bg-gray-50 border rounded text-xs"
+          <label className="text-[10px] font-bold text-gray-400 uppercase">
+            Active Rings
+          </label>
+          <div className="max-h-40 overflow-y-auto space-y-1">
+            {data.levels.map((lvl, idx) => (
+              <div
+                key={lvl.id}
+                className="flex items-center justify-between p-2 bg-gray-50 border rounded text-xs"
+              >
+                <span>Ring {idx + 1}</span>
+                <button
+                  onClick={() => removeLevel(lvl.id)}
+                  className="text-red-400"
                 >
-                  <span>Ring {idx + 1}</span>
-                  <button
-                    onClick={() => removeLevel(lvl.id)}
-                    className="text-red-400 hover:text-red-600 transition-colors"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-              ))}
-            </div>
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            ))}
           </div>
-
-          <div className="flex justify-between items-center">
-            <label className="text-sm font-semibold">Sectors</label>
+          <div className="flex justify-between items-center text-sm font-semibold">
+            <span>Sectors</span>
             <input
               type="number"
               value={data.sectors}
@@ -319,54 +298,43 @@ export default function ConcentricDesigner() {
               className="w-16 border rounded p-1 text-center"
             />
           </div>
-
-          {/* New Section for Outermost Labels */}
           <div className="space-y-2">
             <label className="text-[10px] font-bold text-gray-400 uppercase">
-              Outermost Curved Labels
+              Outermost Labels
             </label>
-            <div className="space-y-1">
-              {data.outermostLabels.map((label, idx) => (
-                <input
-                  key={`label-input-${idx}`}
-                  type="text"
-                  value={label}
-                  onChange={(e) => updateOuterLabel(idx, e.target.value)}
-                  placeholder={`Sector ${idx + 1} Outer Label`}
-                  className="w-full text-xs p-2 border rounded bg-gray-50"
-                />
-              ))}
-            </div>
+            {data.outermostLabels.map((label, idx) => (
+              <input
+                key={idx}
+                type="text"
+                value={label}
+                onChange={(e) => updateOuterLabel(idx, e.target.value)}
+                className="w-full text-xs p-2 border rounded bg-gray-50"
+              />
+            ))}
           </div>
-
           <div className="space-y-2 pt-2 border-t">
-            <label className="text-[10px] font-bold text-gray-400 uppercase">
-              Spacing
-            </label>
-            <div className="space-y-1">
-              <label className="text-[10px]">Arch Gap</label>
-              <input
-                type="range"
-                min="2"
-                max="40"
-                value={config.arcPadding}
-                onChange={(e) =>
-                  setConfig({ ...config, arcPadding: parseInt(e.target.value) })
-                }
-                className="w-full"
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-[10px]">Ring Gap</label>
-              <input
-                type="range"
-                value={config.gapSize}
-                onChange={(e) =>
-                  setConfig({ ...config, gapSize: parseInt(e.target.value) })
-                }
-                className="w-full"
-              />
-            </div>
+            <label className="text-[10px]">Arch Gap (Linear Pixels)</label>
+            <input
+              type="range"
+              min="2"
+              max="100"
+              value={config.arcPadding}
+              onChange={(e) =>
+                setConfig({ ...config, arcPadding: parseInt(e.target.value) })
+              }
+              className="w-full"
+            />
+            <label className="text-[10px]">Ring Gap</label>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value={config.gapSize}
+              onChange={(e) =>
+                setConfig({ ...config, gapSize: parseInt(e.target.value) })
+              }
+              className="w-full"
+            />
           </div>
           <button
             onClick={addLevel}
@@ -375,10 +343,8 @@ export default function ConcentricDesigner() {
             + Add Level
           </button>
         </div>
-
-        {selectedArc && data.levels[selectedArc.levelIndex] ? (
+        {selectedArc && (
           <div className="p-4 bg-gray-50 rounded-lg border space-y-3">
-            <span className="text-xs font-bold">Edit Arch Content</span>
             <textarea
               className="w-full p-2 text-sm border rounded"
               rows={2}
@@ -399,7 +365,7 @@ export default function ConcentricDesigner() {
             <div className="grid grid-cols-2 gap-2">
               <input
                 type="color"
-                className="w-full h-8 block"
+                className="w-full h-8"
                 value={
                   data.levels[selectedArc.levelIndex].arcs[
                     selectedArc.sectorIndex
@@ -416,7 +382,7 @@ export default function ConcentricDesigner() {
               />
               <input
                 type="color"
-                className="w-full h-8 block"
+                className="w-full h-8"
                 value={
                   data.levels[selectedArc.levelIndex].arcs[
                     selectedArc.sectorIndex
@@ -434,26 +400,20 @@ export default function ConcentricDesigner() {
             </div>
             <button
               onClick={() => setSelectedArc(null)}
-              className="w-full text-xs text-blue-500 py-1"
+              className="w-full text-xs text-blue-500 py-1 underline"
             >
-              Close
+              Deselect
             </button>
           </div>
-        ) : (
-          <p className="text-xs text-gray-400 italic text-center border p-4 rounded-lg">
-            Click an arch to edit its text/color
-          </p>
         )}
-
         <button
           onClick={downloadPNG}
-          className="mt-auto w-full py-3 bg-indigo-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg hover:bg-indigo-700 transition"
+          className="mt-auto w-full py-3 bg-indigo-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg"
         >
           <Download size={20} /> Export PNG
         </button>
       </div>
 
-      {/* --- CANVAS --- */}
       <div className="flex-1 flex items-center justify-center p-10 overflow-auto">
         <div className="bg-white shadow-2xl border">
           <svg
@@ -486,31 +446,6 @@ export default function ConcentricDesigner() {
               </marker>
             </defs>
 
-            {/* Center Area */}
-            <circle
-              cx={CENTER}
-              cy={CENTER}
-              r={config.centerRadius}
-              fill="#fff"
-              stroke="#ccc"
-            />
-            <foreignObject
-              x={CENTER - config.centerRadius}
-              y={CENTER - config.centerRadius}
-              width={config.centerRadius * 2}
-              height={config.centerRadius * 2}
-            >
-              <div className="w-full h-full flex items-center justify-center">
-                <textarea
-                  className="bg-transparent text-center font-bold text-xs w-full outline-none resize-none border-none"
-                  value={data.centerText}
-                  onChange={(e) =>
-                    setData({ ...data, centerText: e.target.value })
-                  }
-                />
-              </div>
-            </foreignObject>
-
             {/* Arches Rendering */}
             {data.levels.map((lvl, lIdx) => {
               const r =
@@ -518,30 +453,24 @@ export default function ConcentricDesigner() {
                 config.gapSize +
                 lIdx * (config.levelThickness + config.gapSize) +
                 config.levelThickness / 2;
-
               const step = 360 / data.sectors;
+              const angularPadding = (config.arcPadding / r) * (180 / Math.PI);
               const isOuterMostLevel = lIdx === data.levels.length - 1;
 
               return (
                 <g key={lvl.id}>
                   {lvl.arcs.map((arc, sIdx) => {
-                    const s = sIdx * step + config.arcPadding / 2;
-                    const e = (sIdx + 1) * step - config.arcPadding / 2;
+                    const s = sIdx * step + angularPadding / 2;
+                    const e = (sIdx + 1) * step - angularPadding / 2;
                     const path = describeTextArc(CENTER, CENTER, r, s, e);
-
-                    // Path for label sitting on top of the arch
-                    const labelRadius = r + config.levelThickness / 2 + 12;
                     const labelPath = describeTextArc(
                       CENTER,
                       CENTER,
-                      labelRadius,
+                      r + config.levelThickness / 2 + 15,
                       s,
                       e
                     );
 
-                    const isSelected =
-                      selectedArc?.levelIndex === lIdx &&
-                      selectedArc?.sectorIndex === sIdx;
                     return (
                       <g
                         key={`${lIdx}-${sIdx}`}
@@ -559,15 +488,6 @@ export default function ConcentricDesigner() {
                           stroke={arc.color}
                           strokeWidth={config.levelThickness}
                         />
-                        {isSelected && (
-                          <path
-                            d={path.d}
-                            fill="none"
-                            stroke="#3b82f6"
-                            strokeWidth={config.levelThickness + 4}
-                            strokeOpacity="0.3"
-                          />
-                        )}
                         <path id={`p-${lIdx}-${sIdx}`} d={path.d} fill="none" />
                         <text
                           fill={arc.textColor}
@@ -582,21 +502,19 @@ export default function ConcentricDesigner() {
                             {arc.text}
                           </textPath>
                         </text>
-
-                        {/* DYNAMIC TOP LABEL - Only render if this is the last level */}
                         {isOuterMostLevel && (
                           <>
                             <path
-                              id={`outer-label-p-${sIdx}`}
+                              id={`ol-${sIdx}`}
                               d={labelPath.d}
                               fill="none"
                             />
                             <text
-                              fill="#64748b"
-                              className="text-[12px] font-bold pointer-events-none uppercase tracking-wide"
+                              fill="#94a3b8"
+                              className="text-[11px] font-bold uppercase pointer-events-none"
                             >
                               <textPath
-                                href={`#outer-label-p-${sIdx}`}
+                                href={`#ol-${sIdx}`}
                                 startOffset="50%"
                                 textAnchor="middle"
                                 dominantBaseline="middle"
@@ -613,38 +531,37 @@ export default function ConcentricDesigner() {
               );
             })}
 
-            {/* Continuous Sector Gaps */}
+            {/* SIDEWAYS TEXT - FULL HEIGHT FIX */}
             {Array.from({ length: data.sectors }).map((_, sIdx) => {
               const step = 360 / data.sectors;
-              const channelAngle = (sIdx + 1) * step;
-              const totalLevels = data.levels.length;
-
+              const angle = (sIdx + 1) * step;
               const innerBoundary = config.centerRadius + config.gapSize;
               const outerBoundary =
                 config.centerRadius +
-                totalLevels * (config.levelThickness + config.gapSize);
-              const channelLength = outerBoundary - innerBoundary;
+                data.levels.length * (config.levelThickness + config.gapSize);
+              const channelHeight = outerBoundary - innerBoundary;
 
               return (
                 <g
-                  key={`channel-grp-${sIdx}`}
-                  transform={`rotate(${channelAngle}, ${CENTER}, ${CENTER})`}
+                  key={`ch-${sIdx}`}
+                  transform={`rotate(${angle}, ${CENTER}, ${CENTER})`}
                 >
                   <foreignObject
                     x={CENTER - 20}
                     y={CENTER - outerBoundary}
                     width="40"
-                    height={channelLength}
-                    style={{ pointerEvents: "all" }}
+                    height={channelHeight}
                   >
                     <div className="w-full h-full flex items-center justify-center">
                       <input
-                        className="w-full bg-transparent text-[11px] font-bold text-center outline-none border-none hover:bg-gray-100/30 focus:bg-white/80 rounded transition-all"
+                        className="bg-transparent text-[11px] font-bold text-center outline-none border-none hover:bg-gray-100/30 focus:bg-white/80 transition-all"
                         placeholder="..."
                         style={{
+                          width: `${channelHeight}px`,
+                          height: "40px",
                           transform: "rotate(-90deg)",
-                          width: `${channelLength}px`,
                           whiteSpace: "nowrap",
+                          textAlign: "center",
                         }}
                         value={data.channelTexts[`channel-${sIdx}`] || ""}
                         onChange={(e) =>
@@ -656,6 +573,31 @@ export default function ConcentricDesigner() {
                 </g>
               );
             })}
+
+            {/* Center Area */}
+            <circle
+              cx={CENTER}
+              cy={CENTER}
+              r={config.centerRadius}
+              fill="#fff"
+              stroke="#ccc"
+            />
+            <foreignObject
+              x={CENTER - config.centerRadius}
+              y={CENTER - config.centerRadius}
+              width={config.centerRadius * 2}
+              height={config.centerRadius * 2}
+            >
+              <div className="w-full h-full flex items-center justify-center">
+                <textarea
+                  className="bg-transparent text-center font-bold text-xs w-full outline-none resize-none"
+                  value={data.centerText}
+                  onChange={(e) =>
+                    setData({ ...data, centerText: e.target.value })
+                  }
+                />
+              </div>
+            </foreignObject>
 
             {/* Arrows */}
             {data.arrows.map((a) => {
@@ -671,90 +613,39 @@ export default function ConcentricDesigner() {
                 a.radius,
                 a.endAngle
               );
-              const handleStart = {
-                x: bStart.x + a.offsetX,
-                y: bStart.y + a.offsetY,
-              };
-              const handleEnd = {
-                x: bEnd.x + a.offsetX,
-                y: bEnd.y + a.offsetY,
-              };
               return (
-                <g key={a.id}>
-                  <g
-                    transform={`translate(${a.offsetX}, ${a.offsetY})`}
-                    className="cursor-move"
-                    onMouseDown={(e) =>
-                      setDragState({
-                        id: a.id,
-                        mode: "move",
-                        initialMouseX: e.clientX,
-                        initialMouseY: e.clientY,
-                        initialOffsetX: a.offsetX,
-                        initialOffsetY: a.offsetY,
-                        initialAngle: 0,
-                        baseAngle: 0,
-                      })
+                <g
+                  key={a.id}
+                  transform={`translate(${a.offsetX}, ${a.offsetY})`}
+                  className="cursor-move"
+                  onMouseDown={(e) =>
+                    setDragState({
+                      id: a.id,
+                      mode: "move",
+                      initialMouseX: e.clientX,
+                      initialMouseY: e.clientY,
+                      initialOffsetX: a.offsetX,
+                      initialOffsetY: a.offsetY,
+                    })
+                  }
+                >
+                  <path
+                    d={
+                      a.type === "curved"
+                        ? describeTextArc(
+                            CENTER,
+                            CENTER,
+                            a.radius,
+                            a.startAngle,
+                            a.endAngle
+                          ).d
+                        : `M ${bStart.x} ${bStart.y} L ${bEnd.x} ${bEnd.y}`
                     }
-                  >
-                    <path
-                      d={
-                        a.type === "curved"
-                          ? describeTextArc(
-                              CENTER,
-                              CENTER,
-                              a.radius,
-                              a.startAngle,
-                              a.endAngle
-                            ).d
-                          : `M ${bStart.x} ${bStart.y} L ${bEnd.x} ${bEnd.y}`
-                      }
-                      fill="none"
-                      stroke={a.color}
-                      strokeWidth="6"
-                      markerEnd="url(#head-end)"
-                      markerStart={
-                        a.type === "double" ? "url(#head-start)" : ""
-                      }
-                    />
-                  </g>
-                  <circle
-                    cx={handleStart.x}
-                    cy={handleStart.y}
-                    r="8"
-                    className="fill-white stroke-blue-500 stroke-2 cursor-crosshair"
-                    onMouseDown={(e) => {
-                      e.stopPropagation();
-                      setDragState({
-                        id: a.id,
-                        mode: "start",
-                        initialMouseX: 0,
-                        initialMouseY: 0,
-                        initialOffsetX: a.offsetX,
-                        initialOffsetY: a.offsetY,
-                        initialAngle: 0,
-                        baseAngle: 0,
-                      });
-                    }}
-                  />
-                  <circle
-                    cx={handleEnd.x}
-                    cy={handleEnd.y}
-                    r="8"
-                    className="fill-white stroke-blue-500 stroke-2 cursor-crosshair"
-                    onMouseDown={(e) => {
-                      e.stopPropagation();
-                      setDragState({
-                        id: a.id,
-                        mode: "end",
-                        initialMouseX: 0,
-                        initialMouseY: 0,
-                        initialOffsetX: a.offsetX,
-                        initialOffsetY: a.offsetY,
-                        initialAngle: 0,
-                        baseAngle: 0,
-                      });
-                    }}
+                    fill="none"
+                    stroke={a.color}
+                    strokeWidth="6"
+                    markerEnd="url(#head-end)"
+                    markerStart={a.type === "double" ? "url(#head-start)" : ""}
                   />
                 </g>
               );
