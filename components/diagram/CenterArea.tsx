@@ -18,19 +18,21 @@ export function CenterArea({
         cy={CENTER}
         r={config.centerRadius}
         fill="oklch(65.6% 0.241 354.308)"
-        // stroke="#ccc"
+        className="pointer-events-none"
       />
       <foreignObject
         x={CENTER - config.centerRadius}
         y={CENTER - config.centerRadius}
         width={config.centerRadius * 2}
         height={config.centerRadius * 2}
+        className="pointer-events-auto"
       >
-        <div className="w-full h-full flex items-center justify-center">
+        <div className="w-full h-full flex items-center justify-center pointer-events-auto">
           <textarea
-            className="bg-transparent text-center font-bold text-lg sm:text-md md:text-xl lg:text-2xl w-full outline-none resize-none text-white"
+            className="bg-transparent text-center font-bold text-lg sm:text-md md:text-xl lg:text-2xl w-full outline-none resize-none text-white pointer-events-auto cursor-text"
             value={centerText}
             onChange={(e) => onTextChange(e.target.value)}
+            onClick={(e) => e.stopPropagation()}
           />
         </div>
       </foreignObject>
