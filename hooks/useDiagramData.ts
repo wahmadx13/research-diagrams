@@ -4,6 +4,8 @@ import {
   DiagramConfig,
   SelectedArc,
   ArcData,
+  ShapeData,
+  ShapeType,
 } from "@/types/diagram";
 
 const initialData: DiagramData = {
@@ -23,6 +25,7 @@ const initialData: DiagramData = {
   channelTexts: {},
   outermostLabels: ["Label A", "Label B", "Label C", "Label D"],
   arrows: [],
+  shapes: [],
 };
 
 const initialConfig: DiagramConfig = {
@@ -117,6 +120,38 @@ export function useDiagramData() {
     setConfig((prev) => ({ ...prev, ...updates }));
   };
 
+  const addShape = (type: ShapeType) => {
+    const newShape: ShapeData = {
+      id: `shape-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      type,
+      position: { x: 500, y: 500 },
+      rotation: 0,
+      size: { width: 100, height: 30 },
+      color: "#3b82f6",
+    };
+    setData((prev) => ({
+      ...prev,
+      shapes: [...prev.shapes, newShape],
+    }));
+    return newShape.id;
+  };
+
+  const updateShape = (id: string, updates: Partial<ShapeData>) => {
+    setData((prev) => ({
+      ...prev,
+      shapes: prev.shapes.map((shape) =>
+        shape.id === id ? { ...shape, ...updates } : shape
+      ),
+    }));
+  };
+
+  const removeShape = (id: string) => {
+    setData((prev) => ({
+      ...prev,
+      shapes: prev.shapes.filter((shape) => shape.id !== id),
+    }));
+  };
+
   return {
     data,
     config,
@@ -130,5 +165,8 @@ export function useDiagramData() {
     updateSectorCount,
     updateCenterText,
     updateConfig,
+    addShape,
+    updateShape,
+    removeShape,
   };
 }

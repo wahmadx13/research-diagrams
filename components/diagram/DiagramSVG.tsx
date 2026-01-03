@@ -3,22 +3,31 @@ import { Markers } from "./Markers";
 import { ArchesGroup } from "./ArchesGroup";
 import { ChannelText } from "./ChannelText";
 import { CenterArea } from "./CenterArea";
+import { ShapeRenderer } from "./shapes/ShapeRenderer";
 
 interface DiagramSVGProps {
   data: DiagramData;
   config: DiagramConfig;
+  selectedShapeId: string | null;
   onArcSelect: (levelIndex: number, sectorIndex: number) => void;
   onChannelTextChange: (sectorIndex: number, text: string) => void;
   onCenterTextChange: (text: string) => void;
+  onShapeSelect: (id: string) => void;
+  onShapeUpdate: (id: string, updates: Partial<import("@/types/diagram").ShapeData>) => void;
+  onShapeDelete: (id: string) => void;
   svgRef: React.RefObject<SVGSVGElement | null>;
 }
 
 export function DiagramSVG({
   data,
   config,
+  selectedShapeId,
   onArcSelect,
   onChannelTextChange,
   onCenterTextChange,
+  onShapeSelect,
+  onShapeUpdate,
+  onShapeDelete,
   svgRef,
 }: DiagramSVGProps) {
   return (
@@ -29,6 +38,11 @@ export function DiagramSVG({
         height={SVG_SIZE}
         viewBox={`0 0 ${SVG_SIZE} ${SVG_SIZE}`}
         className="w-[800px] h-[800px]"
+        onClick={(e) => {
+          if (e.target === e.currentTarget || (e.target as Element).tagName === "svg") {
+            onShapeSelect("");
+          }
+        }}
       >
         <Markers />
         {data.levels.map((level, levelIndex) => (
@@ -58,6 +72,14 @@ export function DiagramSVG({
           centerText={data.centerText}
           config={config}
           onTextChange={onCenterTextChange}
+        />
+        <ShapeRenderer
+          shapes={data.shapes}
+          selectedShapeId={selectedShapeId}
+          svgRef={svgRef}
+          onShapeSelect={onShapeSelect}
+          onShapeUpdate={onShapeUpdate}
+          onShapeDelete={onShapeDelete}
         />
       </svg>
     </div>

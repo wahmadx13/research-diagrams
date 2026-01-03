@@ -4,15 +4,19 @@ import {
   DiagramConfig,
   SelectedArc,
   ArcData,
+  ShapeType,
 } from "@/types/diagram";
 import { LevelsList } from "./LevelsList";
 import { OuterLabelsEditor } from "./OuterLabelsEditor";
 import { ArcConfigPanel } from "./ArcConfigPanel";
+import { SidebarShapesPanel } from "./SidebarShapesPanel";
+import { ShapeConfigPanel } from "./ShapeConfigPanel";
 
 interface SidebarProps {
   data: DiagramData;
   config: DiagramConfig;
   selectedArc: SelectedArc | null;
+  selectedShapeId: string | null;
   onSectorCountChange: (count: number) => void;
   onOuterLabelChange: (index: number, text: string) => void;
   onConfigChange: (updates: Partial<DiagramConfig>) => void;
@@ -25,6 +29,10 @@ interface SidebarProps {
     value: string
   ) => void;
   onDeselectArc: () => void;
+  onAddShape: (type: ShapeType) => void;
+  onShapeUpdate: (id: string, updates: Partial<import("@/types/diagram").ShapeData>) => void;
+  onShapeDelete: (id: string) => void;
+  onDeselectShape: () => void;
   onDownloadPNG: () => void;
 }
 
@@ -32,6 +40,7 @@ export function Sidebar({
   data,
   config,
   selectedArc,
+  selectedShapeId,
   onSectorCountChange,
   onOuterLabelChange,
   onConfigChange,
@@ -39,6 +48,10 @@ export function Sidebar({
   onRemoveLevel,
   onArcUpdate,
   onDeselectArc,
+  onAddShape,
+  onShapeUpdate,
+  onShapeDelete,
+  onDeselectShape,
   onDownloadPNG,
 }: SidebarProps) {
   return (
@@ -89,6 +102,7 @@ export function Sidebar({
         >
           + Add Level
         </button>
+        <SidebarShapesPanel onAddShape={onAddShape} />
       </div>
       {selectedArc && (
         <ArcConfigPanel
@@ -100,6 +114,19 @@ export function Sidebar({
           onDeselect={onDeselectArc}
         />
       )}
+      {selectedShapeId && (() => {
+        const shape = data.shapes.find((s) => s.id === selectedShapeId);
+        return shape ? (
+          <ShapeConfigPanel
+            shape={shape}
+            onUpdate={(updates) => onShapeUpdate(selectedShapeId, updates)}
+            onDelete={() => {
+              onShapeDelete(selectedShapeId);
+              onDeselectShape();
+            }}
+          />
+        ) : null;
+      })()}
       <button
         onClick={onDownloadPNG}
         className="mt-auto w-full py-3 bg-indigo-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg"

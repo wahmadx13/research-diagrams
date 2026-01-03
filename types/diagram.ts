@@ -38,6 +38,22 @@ export interface DiagramState {
 
 export type ArrowType = "single" | "double" | "curved";
 
+export type ShapeType = "single" | "double" | "single-curved" | "double-curved";
+
+export interface Point {
+  x: number;
+  y: number;
+}
+
+export interface ShapeData {
+  id: string;
+  type: ShapeType;
+  position: Point;
+  rotation: number;
+  size: { width: number; height: number };
+  color: string;
+}
+
 export interface DiagramData {
   centerText: string;
   sectors: number;
@@ -45,6 +61,7 @@ export interface DiagramData {
   channelTexts: Record<string, string>;
   outermostLabels: string[];
   arrows: ArrowData[];
+  shapes: ShapeData[];
 }
 
 export interface DiagramConfig {
@@ -57,6 +74,10 @@ export interface DiagramConfig {
 export interface SelectedArc {
   levelIndex: number;
   sectorIndex: number;
+}
+
+export interface SelectedShape {
+  shapeId: string;
 }
 
 export const SVG_SIZE = 1000;
