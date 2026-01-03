@@ -175,15 +175,25 @@ export function DraggableShape({
   return (
     <g
       transform={`translate(${shape.position.x}, ${shape.position.y}) rotate(${shape.rotation})`}
-      onMouseDown={handleMouseDown}
       onKeyDown={handleKeyDown}
       tabIndex={0}
       style={{ outline: "none" }}
     >
+      <rect
+        x={-shape.size.width / 2 - 5}
+        y={-shape.size.height / 2 - 5}
+        width={shape.size.width + 10}
+        height={shape.size.height + 10}
+        fill="transparent"
+        stroke="none"
+        onMouseDown={handleMouseDown}
+        style={{ cursor: isDragging ? "grabbing" : "grab" }}
+      />
       <g
         transform={`translate(${-shape.size.width / 2}, ${
           -shape.size.height / 2
         })`}
+        style={{ pointerEvents: "none" }}
       >
         <ArrowShape shape={shape} />
       </g>
