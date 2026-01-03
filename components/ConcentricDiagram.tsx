@@ -534,34 +534,45 @@ export default function ConcentricDesigner() {
             {/* SIDEWAYS TEXT - FULL HEIGHT FIX */}
             {Array.from({ length: data.sectors }).map((_, sIdx) => {
               const step = 360 / data.sectors;
+              // Rotate to the gap between sectors
               const angle = (sIdx + 1) * step;
-              const innerBoundary = config.centerRadius + config.gapSize;
+
+              const innerBoundary = config.centerRadius;
               const outerBoundary =
                 config.centerRadius +
                 data.levels.length * (config.levelThickness + config.gapSize);
+
               const channelHeight = outerBoundary - innerBoundary;
+              const width = 30; // The clickable width of the text channel
 
               return (
                 <g
                   key={`ch-${sIdx}`}
+                  // We rotate the group so the Y axis of the foreignObject aligns with the gap
                   transform={`rotate(${angle}, ${CENTER}, ${CENTER})`}
                 >
                   <foreignObject
-                    x={CENTER - 20}
+                    x={CENTER - width / 2}
                     y={CENTER - outerBoundary}
-                    width="40"
+                    width={width}
                     height={channelHeight}
+                    className="overflow-visible"
                   >
-                    <div className="w-full h-full flex items-center justify-center">
+                    <div
+                      className="flex items-center justify-center"
+                      style={{
+                        width: `${channelHeight}px`,
+                        height: `${width}px`,
+                        // Move the element so it rotates around the center of the channel
+                        transformOrigin: "0 0",
+                        transform: `rotate(90deg) translate(0, -${width}px)`,
+                      }}
+                    >
                       <input
-                        className="bg-transparent text-[11px] font-bold text-center outline-none border-none hover:bg-gray-100/30 focus:bg-white/80 transition-all"
-                        placeholder="..."
+                        className="bg-transparent text-[10px] font-bold text-center outline-none border-none hover:bg-blue-100/50 focus:bg-white transition-all w-full uppercase tracking-wider"
+                        placeholder="TYPE HERE..."
                         style={{
-                          width: `${channelHeight}px`,
-                          height: "40px",
-                          transform: "rotate(-90deg)",
-                          whiteSpace: "nowrap",
-                          textAlign: "center",
+                          lineHeight: `${width}px`,
                         }}
                         value={data.channelTexts[`channel-${sIdx}`] || ""}
                         onChange={(e) =>
