@@ -46,30 +46,30 @@ export function SidebarShapesDropdown({
   };
 
   return (
-    <div className="space-y-2 pt-2 border-t">
-      <label className="text-[10px] font-bold text-gray-400 uppercase">
+    <div className="p-4 bg-white/60 backdrop-blur-sm rounded-xl border border-gray-200/50 shadow-sm space-y-3">
+      <label className="text-xs font-semibold text-gray-700 block">
         Add Arrows
       </label>
       <div className="relative" ref={dropdownRef}>
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="w-full flex items-center justify-between p-2 border rounded hover:bg-gray-50 text-xs font-medium"
+          className="w-full flex items-center justify-between px-4 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm font-medium text-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          <span className="text-gray-700">Select Arrow Type</span>
+          <span>Select Arrow Type</span>
           <ChevronDown
-            size={14}
+            size={16}
             className={`text-gray-500 transition-transform ${
               isOpen ? "rotate-180" : ""
             }`}
           />
         </button>
         {isOpen && (
-          <div className="absolute z-50 w-full mt-1 bg-white border rounded shadow-lg">
+          <div className="absolute z-50 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-xl overflow-hidden">
             {shapeOptions.map((option) => (
               <button
                 key={option.type}
                 onClick={() => handleSelect(option.type)}
-                className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 border-b last:border-b-0 transition-colors"
+                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-blue-50 border-b border-gray-100 last:border-b-0 transition-colors text-left"
               >
                 <svg
                   width="60"
@@ -79,7 +79,9 @@ export function SidebarShapesDropdown({
                 >
                   <ArrowPreview type={option.type} width={60} height={20} />
                 </svg>
-                <span className="text-xs text-gray-700">{option.label}</span>
+                <span className="text-xs font-medium text-gray-700">
+                  {option.label}
+                </span>
               </button>
             ))}
           </div>

@@ -50,7 +50,7 @@ export function Arc({
       <path id={`p-${levelIndex}-${sectorIndex}`} d={path.d} fill="none" />
       <text
         fill={arc.textColor}
-        className="text-[14px] font-bold pointer-events-none"
+        className="text-lg sm:text-md md:text-xl lg:text-2xl font-bold pointer-events-none"
       >
         <textPath
           href={`#p-${levelIndex}-${sectorIndex}`}
@@ -66,7 +66,7 @@ export function Arc({
           <path id={`ol-${sectorIndex}`} d={labelPath.d} fill="none" />
           <text
             fill="#94a3b8"
-            className="text-[11px] font-bold uppercase pointer-events-none"
+            className="text-lg sm:text-md md:text-xl lg:text-2xl font-bold pointer-events-none"
           >
             <textPath
               href={`#ol-${sectorIndex}`}

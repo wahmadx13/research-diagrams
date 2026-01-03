@@ -1,5 +1,28 @@
 import { DiagramConfig, CENTER } from "@/types/diagram";
 
+const beautifulColors = [
+  "#3b82f6",
+  "#10b981",
+  "#f59e0b",
+  "#ef4444",
+  "#8b5cf6",
+  "#ec4899",
+  "#06b6d4",
+  "#84cc16",
+  "#f97316",
+  "#6366f1",
+  "#14b8a6",
+  "#a855f7",
+  "#e11d48",
+  "#0ea5e9",
+  "#22c55e",
+  "#fbbf24",
+];
+
+function getColorForChannel(sectorIndex: number): string {
+  return beautifulColors[sectorIndex % beautifulColors.length];
+}
+
 interface ChannelTextProps {
   sectorIndex: number;
   sectors: number;
@@ -50,10 +73,11 @@ export function ChannelText({
           }}
         >
           <input
-            className="bg-transparent text-[10px] font-bold text-center outline-none border-none hover:bg-blue-100/50 focus:bg-white transition-all w-full uppercase tracking-wider"
-            placeholder="TYPE HERE..."
+            className="bg-transparent text-xs sm:text-sm md:text-md lg:text-lg font-bold text-center outline-none border-none hover:bg-blue-100/50 focus:bg-white transition-all w-full tracking-wider"
+            placeholder="Sideways"
             style={{
               lineHeight: `${width}px`,
+              color: getColorForChannel(sectorIndex),
             }}
             value={value}
             onChange={(e) => onChange(sectorIndex, e.target.value)}

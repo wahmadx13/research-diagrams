@@ -17,8 +17,8 @@ export function CenterArea({
         cx={CENTER}
         cy={CENTER}
         r={config.centerRadius}
-        fill="#fff"
-        stroke="#ccc"
+        fill="oklch(65.6% 0.241 354.308)"
+        // stroke="#ccc"
       />
       <foreignObject
         x={CENTER - config.centerRadius}
@@ -28,7 +28,7 @@ export function CenterArea({
       >
         <div className="w-full h-full flex items-center justify-center">
           <textarea
-            className="bg-transparent text-center font-bold text-xs w-full outline-none resize-none"
+            className="bg-transparent text-center font-bold text-lg sm:text-md md:text-xl lg:text-2xl w-full outline-none resize-none text-white"
             value={centerText}
             onChange={(e) => onTextChange(e.target.value)}
           />

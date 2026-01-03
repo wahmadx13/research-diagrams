@@ -68,7 +68,7 @@ export default function ConcentricDesigner() {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden font-sans text-gray-900">
+    <div className="flex h-screen bg-gradient-to-br from-slate-100 via-purple-50 to-pink-50 overflow-hidden font-sans text-gray-900">
       <Sidebar
         data={data}
         config={config}
@@ -87,7 +87,7 @@ export default function ConcentricDesigner() {
         onDeselectShape={handleDeselectShape}
         onDownloadPNG={downloadPNG}
       />
-      <div className="flex-1 flex items-center justify-center p-10 overflow-auto">
+      <div className="flex-1 flex items-center justify-center p-4 lg:p-10 overflow-auto scrollbar-hide">
         <DiagramSVG
           data={data}
           config={config}

@@ -8,6 +8,25 @@ import {
   ShapeType,
 } from "@/types/diagram";
 
+const vibrantColors = [
+  { bg: "#3b82f6", text: "#ffffff" },
+  { bg: "#10b981", text: "#064e3b" },
+  { bg: "#f59e0b", text: "#78350f" },
+  { bg: "#ef4444", text: "#7f1d1d" },
+  { bg: "#8b5cf6", text: "#ffffff" },
+  { bg: "#ec4899", text: "#831843" },
+  { bg: "#06b6d4", text: "#164e63" },
+  { bg: "#84cc16", text: "#365314" },
+  { bg: "#f97316", text: "#7c2d12" },
+  { bg: "#6366f1", text: "#ffffff" },
+  { bg: "#14b8a6", text: "#134e4a" },
+  { bg: "#a855f7", text: "#ffffff" },
+];
+
+const getColorForIndex = (index: number) => {
+  return vibrantColors[index % vibrantColors.length];
+};
+
 const initialData: DiagramData = {
   centerText: "Center\nTopic",
   sectors: 4,
@@ -15,10 +34,26 @@ const initialData: DiagramData = {
     {
       id: "lvl-1",
       arcs: [
-        { text: "Option 1", color: "#e2e8f0", textColor: "#1e293b" },
-        { text: "Option 2", color: "#e2e8f0", textColor: "#1e293b" },
-        { text: "Option 3", color: "#e2e8f0", textColor: "#1e293b" },
-        { text: "Option 4", color: "#e2e8f0", textColor: "#1e293b" },
+        {
+          text: "Option 1",
+          color: "oklch(44.3% 0.11 240.79)",
+          textColor: "oklch(76.9% 0.188 70.08)",
+        },
+        {
+          text: "Option 2",
+          color: "#10b981",
+          textColor: "oklch(27.8% 0.033 256.848)",
+        },
+        {
+          text: "Option 3",
+          color: "#f59e0b",
+          textColor: "oklch(62.7% 0.265 303.9)",
+        },
+        {
+          text: "Option 4",
+          color: "#ef4444",
+          textColor: "oklch(78.5% 0.115 274.713)",
+        },
       ],
     },
   ],
@@ -29,10 +64,10 @@ const initialData: DiagramData = {
 };
 
 const initialConfig: DiagramConfig = {
-  gapSize: 20,
-  levelThickness: 60,
-  centerRadius: 70,
-  arcPadding: 10,
+  gapSize: 40,
+  levelThickness: 90,
+  centerRadius: 100,
+  arcPadding: 50,
 };
 
 export function useDiagramData() {
@@ -56,7 +91,10 @@ export function useDiagramData() {
   const addLevel = () => {
     const newArcs = Array(data.sectors)
       .fill(null)
-      .map(() => ({ text: "New", color: "#e2e8f0", textColor: "#333" }));
+      .map((_, idx) => {
+        const colorPair = getColorForIndex(idx);
+        return { text: "New", color: colorPair.bg, textColor: colorPair.text };
+      });
     setData((prev) => ({
       ...prev,
       levels: [...prev.levels, { id: `lvl-${Date.now()}`, arcs: newArcs }],
@@ -99,14 +137,16 @@ export function useDiagramData() {
           ...lvl,
           arcs: Array(n)
             .fill(null)
-            .map(
-              (_, i) =>
+            .map((_, i) => {
+              const colorPair = getColorForIndex(i);
+              return (
                 lvl.arcs[i] || {
                   text: "New",
-                  color: "#e2e8f0",
-                  textColor: "#333",
+                  color: colorPair.bg,
+                  textColor: colorPair.text,
                 }
-            ),
+              );
+            }),
         })),
       };
     });
@@ -130,7 +170,7 @@ export function useDiagramData() {
       position: { x: offsetX, y: offsetY },
       rotation: 0,
       size: { width: 120, height: initialHeight },
-      color: "#3b82f6",
+      color: "#6366f1",
       ...((type === "single-curved" || type === "double-curved") && {
         curveAmount: -initialHeight * 0.5,
       }),

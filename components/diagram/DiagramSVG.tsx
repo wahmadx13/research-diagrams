@@ -13,7 +13,10 @@ interface DiagramSVGProps {
   onChannelTextChange: (sectorIndex: number, text: string) => void;
   onCenterTextChange: (text: string) => void;
   onShapeSelect: (id: string) => void;
-  onShapeUpdate: (id: string, updates: Partial<import("@/types/diagram").ShapeData>) => void;
+  onShapeUpdate: (
+    id: string,
+    updates: Partial<import("@/types/diagram").ShapeData>
+  ) => void;
   onShapeDelete: (id: string) => void;
   svgRef: React.RefObject<SVGSVGElement | null>;
 }
@@ -31,15 +34,18 @@ export function DiagramSVG({
   svgRef,
 }: DiagramSVGProps) {
   return (
-    <div className="bg-white shadow-2xl border">
+    <div className="w-full h-full flex items-center justify-center">
       <svg
         ref={svgRef}
         width={SVG_SIZE}
         height={SVG_SIZE}
         viewBox={`0 0 ${SVG_SIZE} ${SVG_SIZE}`}
-        className="w-[800px] h-[800px]"
+        className="w-full h-full max-w-full max-h-full"
         onClick={(e) => {
-          if (e.target === e.currentTarget || (e.target as Element).tagName === "svg") {
+          if (
+            e.target === e.currentTarget ||
+            (e.target as Element).tagName === "svg"
+          ) {
             onShapeSelect("");
           }
         }}
@@ -85,4 +91,3 @@ export function DiagramSVG({
     </div>
   );
 }
-
