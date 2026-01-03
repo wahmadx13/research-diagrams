@@ -37,16 +37,33 @@ export function createStraightArrowPath(
   height: number,
   double: boolean
 ): string {
-  const arrowHeadSize = height * 0.4;
+  const arrowHeadLength = Math.min(width * 0.15, height * 0.6);
+  const arrowHeadWidth = height * 0.5;
   const startX = 0;
   const endX = width;
   const midY = height / 2;
+  const shaftEndX = endX - arrowHeadLength;
 
   if (double) {
-    return `M ${startX} ${midY} L ${arrowHeadSize} ${midY - arrowHeadSize / 2} M ${startX} ${midY} L ${arrowHeadSize} ${midY + arrowHeadSize / 2} M ${arrowHeadSize} ${midY} L ${endX - arrowHeadSize} ${midY} M ${endX} ${midY} L ${endX - arrowHeadSize} ${midY - arrowHeadSize / 2} M ${endX} ${midY} L ${endX - arrowHeadSize} ${midY + arrowHeadSize / 2}`;
+    const leftShaftStartX = arrowHeadLength;
+    const leftHeadTipX = 0;
+    const rightHeadTipX = endX;
+    const rightShaftEndX = endX - arrowHeadLength;
+
+    return `M ${leftShaftStartX} ${midY} L ${rightShaftEndX} ${midY} M ${rightHeadTipX} ${midY} L ${rightShaftEndX} ${
+      midY - arrowHeadWidth / 2
+    } M ${rightHeadTipX} ${midY} L ${rightShaftEndX} ${
+      midY + arrowHeadWidth / 2
+    } M ${leftHeadTipX} ${midY} L ${leftShaftStartX} ${
+      midY - arrowHeadWidth / 2
+    } M ${leftHeadTipX} ${midY} L ${leftShaftStartX} ${
+      midY + arrowHeadWidth / 2
+    }`;
   }
 
-  return `M ${startX} ${midY} L ${endX - arrowHeadSize} ${midY} L ${endX - arrowHeadSize} ${midY - arrowHeadSize / 2} M ${endX - arrowHeadSize} ${midY} L ${endX - arrowHeadSize} ${midY + arrowHeadSize / 2} L ${endX} ${midY}`;
+  return `M ${startX} ${midY} L ${shaftEndX} ${midY} M ${endX} ${midY} L ${shaftEndX} ${
+    midY - arrowHeadWidth / 2
+  } M ${endX} ${midY} L ${shaftEndX} ${midY + arrowHeadWidth / 2}`;
 }
 
 export function createCurvedArrowPath(
@@ -54,22 +71,35 @@ export function createCurvedArrowPath(
   height: number,
   double: boolean
 ): string {
-  const arrowHeadSize = height * 0.4;
-  const controlOffset = width * 0.3;
+  const arrowHeadLength = Math.min(width * 0.12, height * 0.5);
+  const arrowHeadWidth = height * 0.5;
+  const curveHeight = height * 0.6;
   const startX = 0;
   const endX = width;
   const midY = height / 2;
+  const controlX1 = width * 0.25;
+  const controlX2 = width * 0.75;
+  const controlY1 = midY - curveHeight;
+  const controlY2 = midY - curveHeight;
+  const shaftEndX = endX - arrowHeadLength;
 
-  const path = `M ${startX} ${midY} Q ${startX + controlOffset} ${midY - controlOffset} ${endX - arrowHeadSize} ${midY}`;
-
-  const arrowHead = `L ${endX - arrowHeadSize} ${midY - arrowHeadSize / 2} M ${endX - arrowHeadSize} ${midY} L ${endX - arrowHeadSize} ${midY + arrowHeadSize / 2} L ${endX} ${midY}`;
+  const mainPath = `M ${startX} ${midY} C ${controlX1} ${controlY1}, ${controlX2} ${controlY2}, ${shaftEndX} ${midY}`;
+  const arrowHead = `M ${endX} ${midY} L ${shaftEndX} ${
+    midY - arrowHeadWidth / 2
+  } M ${endX} ${midY} L ${shaftEndX} ${midY + arrowHeadWidth / 2}`;
 
   if (double) {
-    const reversePath = `M ${endX} ${midY} Q ${endX - controlOffset} ${midY + controlOffset} ${startX + arrowHeadSize} ${midY}`;
-    const reverseArrowHead = `L ${startX + arrowHeadSize} ${midY - arrowHeadSize / 2} M ${startX + arrowHeadSize} ${midY} L ${startX + arrowHeadSize} ${midY + arrowHeadSize / 2} L ${startX} ${midY}`;
-    return `${path} ${arrowHead} ${reversePath} ${reverseArrowHead}`;
+    const reverseControlX1 = width * 0.75;
+    const reverseControlX2 = width * 0.25;
+    const reverseControlY1 = midY + curveHeight;
+    const reverseControlY2 = midY + curveHeight;
+    const reverseShaftStartX = startX + arrowHeadLength;
+    const reversePath = `M ${endX} ${midY} C ${reverseControlX1} ${reverseControlY1}, ${reverseControlX2} ${reverseControlY2}, ${reverseShaftStartX} ${midY}`;
+    const reverseArrowHead = `M ${startX} ${midY} L ${reverseShaftStartX} ${
+      midY - arrowHeadWidth / 2
+    } M ${startX} ${midY} L ${reverseShaftStartX} ${midY + arrowHeadWidth / 2}`;
+    return `${mainPath} ${arrowHead} ${reversePath} ${reverseArrowHead}`;
   }
 
-  return `${path} ${arrowHead}`;
+  return `${mainPath} ${arrowHead}`;
 }
-

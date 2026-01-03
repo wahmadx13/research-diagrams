@@ -75,7 +75,26 @@ export function ShapeConfigPanel({
           {Math.round(shape.rotation)}°
         </div>
       </div>
+      {shape.type === "double-curved" && (
+        <div>
+          <label className="text-[10px] text-gray-400 uppercase">
+            Curve Height
+          </label>
+          <input
+            type="range"
+            min={-shape.size.height * 0.8}
+            max={shape.size.height * 0.8}
+            value={shape.curveHeight ?? -shape.size.height * 0.5}
+            onChange={(e) =>
+              onUpdate({ curveHeight: parseFloat(e.target.value) })
+            }
+            className="w-full"
+          />
+          <div className="text-xs text-center text-gray-500 mt-1">
+            {Math.round(shape.curveHeight ?? -shape.size.height * 0.5)}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
-

@@ -3,11 +3,7 @@
 import { useRef, useState, useCallback, useEffect } from "react";
 import { ShapeData, Point } from "@/types/diagram";
 import { ArrowShape } from "./ArrowShape";
-import {
-  getSVGPoint,
-  calculateDistance,
-  calculateAngle,
-} from "@/utils/shapes";
+import { getSVGPoint, calculateDistance, calculateAngle } from "@/utils/shapes";
 
 interface DraggableShapeProps {
   shape: ShapeData;
@@ -62,9 +58,14 @@ export function DraggableShape({
       } else if (isResizing) {
         const center = initialShapeRef.current.position;
         const distance = calculateDistance(center, svgPoint);
-        const newWidth = Math.max(30, distance * 2);
-        const newHeight = Math.max(20, initialShapeRef.current.size.height);
-        onUpdate({ size: { width: newWidth, height: newHeight } });
+        const newWidth = Math.max(50, distance * 2);
+        const aspectRatio =
+          initialShapeRef.current.size.width /
+          initialShapeRef.current.size.height;
+        const newHeight = newWidth / aspectRatio;
+        onUpdate({
+          size: { width: newWidth, height: Math.max(20, newHeight) },
+        });
       } else if (isDragging) {
         const dx = svgPoint.x - dragStartRef.current.x;
         const dy = svgPoint.y - dragStartRef.current.y;
@@ -147,7 +148,11 @@ export function DraggableShape({
       tabIndex={0}
       style={{ outline: "none" }}
     >
-      <g transform={`translate(${-shape.size.width / 2}, ${-shape.size.height / 2})`}>
+      <g
+        transform={`translate(${-shape.size.width / 2}, ${
+          -shape.size.height / 2
+        })`}
+      >
         <ArrowShape shape={shape} />
       </g>
 
@@ -204,4 +209,3 @@ export function DraggableShape({
     </g>
   );
 }
-

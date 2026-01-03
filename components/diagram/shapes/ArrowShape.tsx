@@ -13,19 +13,31 @@ export function ArrowShape({ shape }: ArrowShapeProps) {
 
   switch (type) {
     case "single":
-      return <SingleArrow width={size.width} height={size.height} color={color} />;
+      return (
+        <SingleArrow width={size.width} height={size.height} color={color} />
+      );
     case "double":
-      return <DoubleArrow width={size.width} height={size.height} color={color} />;
+      return (
+        <DoubleArrow width={size.width} height={size.height} color={color} />
+      );
     case "single-curved":
       return (
-        <SingleCurvedArrow width={size.width} height={size.height} color={color} />
+        <SingleCurvedArrow
+          width={size.width}
+          height={size.height}
+          color={color}
+        />
       );
     case "double-curved":
       return (
-        <DoubleCurvedArrow width={size.width} height={size.height} color={color} />
+        <DoubleCurvedArrow
+          width={size.width}
+          height={size.height}
+          color={color}
+          curveHeight={shape.curveHeight}
+        />
       );
     default:
       return null;
   }
 }
-

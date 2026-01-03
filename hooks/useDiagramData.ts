@@ -128,6 +128,7 @@ export function useDiagramData() {
       rotation: 0,
       size: { width: 100, height: 30 },
       color: "#3b82f6",
+      ...(type === "double-curved" && { curveHeight: -15 }),
     };
     setData((prev) => ({
       ...prev,

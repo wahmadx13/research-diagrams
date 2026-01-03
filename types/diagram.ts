@@ -52,6 +52,7 @@ export interface ShapeData {
   rotation: number;
   size: { width: number; height: number };
   color: string;
+  curveHeight?: number;
 }
 
 export interface DiagramData {

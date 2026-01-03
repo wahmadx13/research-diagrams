@@ -9,7 +9,7 @@ import {
 import { LevelsList } from "./LevelsList";
 import { OuterLabelsEditor } from "./OuterLabelsEditor";
 import { ArcConfigPanel } from "./ArcConfigPanel";
-import { SidebarShapesPanel } from "./SidebarShapesPanel";
+import { SidebarShapesDropdown } from "./SidebarShapesDropdown";
 import { ShapeConfigPanel } from "./ShapeConfigPanel";
 
 interface SidebarProps {
@@ -30,7 +30,10 @@ interface SidebarProps {
   ) => void;
   onDeselectArc: () => void;
   onAddShape: (type: ShapeType) => void;
-  onShapeUpdate: (id: string, updates: Partial<import("@/types/diagram").ShapeData>) => void;
+  onShapeUpdate: (
+    id: string,
+    updates: Partial<import("@/types/diagram").ShapeData>
+  ) => void;
   onShapeDelete: (id: string) => void;
   onDeselectShape: () => void;
   onDownloadPNG: () => void;
@@ -102,7 +105,7 @@ export function Sidebar({
         >
           + Add Level
         </button>
-        <SidebarShapesPanel onAddShape={onAddShape} />
+        <SidebarShapesDropdown onAddShape={onAddShape} />
       </div>
       {selectedArc && (
         <ArcConfigPanel
@@ -114,19 +117,20 @@ export function Sidebar({
           onDeselect={onDeselectArc}
         />
       )}
-      {selectedShapeId && (() => {
-        const shape = data.shapes.find((s) => s.id === selectedShapeId);
-        return shape ? (
-          <ShapeConfigPanel
-            shape={shape}
-            onUpdate={(updates) => onShapeUpdate(selectedShapeId, updates)}
-            onDelete={() => {
-              onShapeDelete(selectedShapeId);
-              onDeselectShape();
-            }}
-          />
-        ) : null;
-      })()}
+      {selectedShapeId &&
+        (() => {
+          const shape = data.shapes.find((s) => s.id === selectedShapeId);
+          return shape ? (
+            <ShapeConfigPanel
+              shape={shape}
+              onUpdate={(updates) => onShapeUpdate(selectedShapeId, updates)}
+              onDelete={() => {
+                onShapeDelete(selectedShapeId);
+                onDeselectShape();
+              }}
+            />
+          ) : null;
+        })()}
       <button
         onClick={onDownloadPNG}
         className="mt-auto w-full py-3 bg-indigo-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg"
