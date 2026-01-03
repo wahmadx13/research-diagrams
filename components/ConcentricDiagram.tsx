@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useCallback } from "react";
 import { Download, Trash2 } from "lucide-react";
-import { describeTextArc, polarToCartesian } from "@/utils/geometry";
+import { describeTextArc } from "@/utils/geometry";
 import { ArrowData, ArcData, SVG_SIZE, CENTER } from "@/types/diagram";
 
 export default function ConcentricDesigner() {
   const [data, setData] = useState({
     centerText: "Center\nTopic",
-    sectors: 3,
+    sectors: 4,
     levels: [
       {
         id: "lvl-1",
@@ -16,11 +16,12 @@ export default function ConcentricDesigner() {
           { text: "Option 1", color: "#e2e8f0", textColor: "#1e293b" },
           { text: "Option 2", color: "#e2e8f0", textColor: "#1e293b" },
           { text: "Option 3", color: "#e2e8f0", textColor: "#1e293b" },
+          { text: "Option 4", color: "#e2e8f0", textColor: "#1e293b" },
         ],
       },
     ],
     channelTexts: {} as Record<string, string>,
-    outermostLabels: ["Label A", "Label B", "Label C"] as string[],
+    outermostLabels: ["Label A", "Label B", "Label C", "Label D"] as string[],
     arrows: [] as ArrowData[],
   });
 
@@ -35,77 +36,8 @@ export default function ConcentricDesigner() {
     levelIndex: number;
     sectorIndex: number;
   } | null>(null);
-  const [dragState, setDragState] = useState<{
-    id: number;
-    mode: "start" | "end" | "move";
-    initialMouseX: number;
-    initialMouseY: number;
-    initialOffsetX: number;
-    initialOffsetY: number;
-  } | null>(null);
 
   const svgRef = useRef<SVGSVGElement>(null);
-
-  // --- MOUSE LOGIC ---
-  const handleMouseMove = useCallback(
-    (e: MouseEvent) => {
-      if (!dragState || !svgRef.current) return;
-      const arrow = data.arrows.find((a) => a.id === dragState.id);
-      if (!arrow) return;
-
-      const rect = svgRef.current.getBoundingClientRect();
-      const scale = SVG_SIZE / rect.width;
-
-      if (dragState.mode === "move") {
-        const dx = (e.clientX - dragState.initialMouseX) * scale;
-        const dy = (e.clientY - dragState.initialMouseY) * scale;
-        setData((prev) => ({
-          ...prev,
-          arrows: prev.arrows.map((a) =>
-            a.id === dragState.id
-              ? {
-                  ...a,
-                  offsetX: dragState.initialOffsetX + dx,
-                  offsetY: dragState.initialOffsetY + dy,
-                }
-              : a
-          ),
-        }));
-        return;
-      }
-
-      const mouseX = (e.clientX - rect.left) * scale;
-      const mouseY = (e.clientY - rect.top) * scale;
-      const relativeX = mouseX - (CENTER + arrow.offsetX);
-      const relativeY = mouseY - (CENTER + arrow.offsetY);
-      const newAngle = (Math.atan2(relativeY, relativeX) * 180) / Math.PI + 90;
-      const newRadius = Math.sqrt(
-        relativeX * relativeX + relativeY * relativeY
-      );
-
-      setData((prev) => ({
-        ...prev,
-        arrows: prev.arrows.map((a) => {
-          if (a.id !== dragState.id) return a;
-          return dragState.mode === "start"
-            ? { ...a, startAngle: newAngle, radius: newRadius }
-            : { ...a, endAngle: newAngle, radius: newRadius };
-        }),
-      }));
-    },
-    [dragState, data.arrows]
-  );
-
-  useEffect(() => {
-    if (dragState) {
-      window.addEventListener("mousemove", handleMouseMove);
-      window.addEventListener("mouseup", () => setDragState(null));
-    }
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseup", () => setDragState(null));
-    };
-  }, [dragState, handleMouseMove]);
 
   // --- ACTIONS ---
   const updateChannelText = (sectorIdx: number, text: string) => {
@@ -545,58 +477,6 @@ export default function ConcentricDesigner() {
                 />
               </div>
             </foreignObject>
-
-            {/* Arrows */}
-            {data.arrows.map((a) => {
-              const bStart = polarToCartesian(
-                CENTER,
-                CENTER,
-                a.radius,
-                a.startAngle
-              );
-              const bEnd = polarToCartesian(
-                CENTER,
-                CENTER,
-                a.radius,
-                a.endAngle
-              );
-              return (
-                <g
-                  key={a.id}
-                  transform={`translate(${a.offsetX}, ${a.offsetY})`}
-                  className="cursor-move"
-                  onMouseDown={(e) =>
-                    setDragState({
-                      id: a.id,
-                      mode: "move",
-                      initialMouseX: e.clientX,
-                      initialMouseY: e.clientY,
-                      initialOffsetX: a.offsetX,
-                      initialOffsetY: a.offsetY,
-                    })
-                  }
-                >
-                  <path
-                    d={
-                      a.type === "curved"
-                        ? describeTextArc(
-                            CENTER,
-                            CENTER,
-                            a.radius,
-                            a.startAngle,
-                            a.endAngle
-                          ).d
-                        : `M ${bStart.x} ${bStart.y} L ${bEnd.x} ${bEnd.y}`
-                    }
-                    fill="none"
-                    stroke={a.color}
-                    strokeWidth="6"
-                    markerEnd="url(#head-end)"
-                    markerStart={a.type === "double" ? "url(#head-start)" : ""}
-                  />
-                </g>
-              );
-            })}
           </svg>
         </div>
       </div>
