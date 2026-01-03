@@ -1,73 +1,9 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback } from "react";
-import { Download, Plus, Trash2 } from "lucide-react";
-
-// --- GEOMETRY UTILS ---
-const polarToCartesian = (
-  centerX: number,
-  centerY: number,
-  radius: number,
-  angleInDegrees: number
-) => {
-  const angleInRadians = ((angleInDegrees - 90) * Math.PI) / 180.0;
-  return {
-    x: centerX + radius * Math.cos(angleInRadians),
-    y: centerY + radius * Math.sin(angleInRadians),
-  };
-};
-
-const describeTextArc = (
-  x: number,
-  y: number,
-  radius: number,
-  startAngle: number,
-  endAngle: number
-) => {
-  const start = polarToCartesian(x, y, radius, endAngle);
-  const end = polarToCartesian(x, y, radius, startAngle);
-  const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
-  return {
-    d: [
-      "M",
-      start.x,
-      start.y,
-      "A",
-      radius,
-      radius,
-      0,
-      largeArcFlag,
-      0,
-      end.x,
-      end.y,
-    ].join(" "),
-  };
-};
-
-// --- TYPES ---
-export type ArrowType = "single" | "double" | "curved";
-export interface ArcData {
-  text: string;
-  color: string;
-  textColor: string;
-}
-export interface LevelData {
-  id: string;
-  arcs: ArcData[];
-}
-export interface ArrowData {
-  id: number;
-  type: ArrowType;
-  startAngle: number;
-  endAngle: number;
-  radius: number;
-  color: string;
-  offsetX: number;
-  offsetY: number;
-}
-
-const SVG_SIZE = 1000;
-const CENTER = SVG_SIZE / 2;
+import { useState, useRef, useEffect, useCallback } from "react";
+import { Download, Trash2 } from "lucide-react";
+import { describeTextArc, polarToCartesian } from "@/utils/geometry";
+import { ArrowData, ArcData, SVG_SIZE, CENTER } from "@/types/diagram";
 
 export default function ConcentricDesigner() {
   const [data, setData] = useState({

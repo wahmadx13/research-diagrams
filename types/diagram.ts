@@ -9,8 +9,6 @@ export interface LevelData {
   arcs: ArcData[];
 }
 
-export type ArrowType = "single" | "double" | "curved";
-
 export interface ArrowData {
   id: number;
   type: ArrowType;
@@ -37,3 +35,27 @@ export interface DiagramState {
   gapLabels: GapLabel[];
   outerLabels: string[];
 }
+
+export type ArrowType = "single" | "double" | "curved";
+export interface ArcData {
+  text: string;
+  color: string;
+  textColor: string;
+}
+export interface LevelData {
+  id: string;
+  arcs: ArcData[];
+}
+export interface ArrowData {
+  id: number;
+  type: ArrowType;
+  startAngle: number;
+  endAngle: number;
+  radius: number;
+  color: string;
+  offsetX: number;
+  offsetY: number;
+}
+
+export const SVG_SIZE = 1000;
+export const CENTER = SVG_SIZE / 2;
