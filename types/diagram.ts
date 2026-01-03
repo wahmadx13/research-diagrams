@@ -16,8 +16,8 @@ export interface ArrowData {
   endAngle: number;
   radius: number;
   color: string;
-  offsetX: number; // New field
-  offsetY: number; // New field
+  offsetX: number;
+  offsetY: number;
 }
 
 export interface GapLabel {
@@ -37,24 +37,26 @@ export interface DiagramState {
 }
 
 export type ArrowType = "single" | "double" | "curved";
-export interface ArcData {
-  text: string;
-  color: string;
-  textColor: string;
+
+export interface DiagramData {
+  centerText: string;
+  sectors: number;
+  levels: LevelData[];
+  channelTexts: Record<string, string>;
+  outermostLabels: string[];
+  arrows: ArrowData[];
 }
-export interface LevelData {
-  id: string;
-  arcs: ArcData[];
+
+export interface DiagramConfig {
+  gapSize: number;
+  levelThickness: number;
+  centerRadius: number;
+  arcPadding: number;
 }
-export interface ArrowData {
-  id: number;
-  type: ArrowType;
-  startAngle: number;
-  endAngle: number;
-  radius: number;
-  color: string;
-  offsetX: number;
-  offsetY: number;
+
+export interface SelectedArc {
+  levelIndex: number;
+  sectorIndex: number;
 }
 
 export const SVG_SIZE = 1000;
