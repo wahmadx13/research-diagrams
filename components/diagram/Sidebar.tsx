@@ -10,6 +10,7 @@ import {
   ShapeType,
 } from "@/types/diagram";
 import { OuterLabelsEditor } from "./OuterLabelsEditor";
+import { ChannelTextsEditor } from "./ChannelTextsEditor";
 import { ArcConfigPanel } from "./ArcConfigPanel";
 import { SidebarShapesDropdown } from "./SidebarShapesDropdown";
 import { ShapeConfigPanel } from "./ShapeConfigPanel";
@@ -22,6 +23,7 @@ interface SidebarProps {
   selectedShapeId: string | null;
   onSectorCountChange: (count: number) => void;
   onOuterLabelChange: (index: number, text: string) => void;
+  onChannelTextChange: (index: number, text: string) => void;
   onConfigChange: (updates: Partial<DiagramConfig>) => void;
   onAddLevel: () => void;
   onRemoveLevel: (id: string) => void;
@@ -49,6 +51,7 @@ export function Sidebar({
   selectedShapeId,
   onSectorCountChange,
   onOuterLabelChange,
+  onChannelTextChange,
   onConfigChange,
   onAddLevel,
   onRemoveLevel,
@@ -105,6 +108,11 @@ export function Sidebar({
             <OuterLabelsEditor
               labels={data.outermostLabels}
               onLabelChange={onOuterLabelChange}
+            />
+            <ChannelTextsEditor
+              channelTexts={data.channelTexts}
+              sectors={data.sectors}
+              onChannelTextChange={onChannelTextChange}
             />
             <div className="p-4 bg-white/60 backdrop-blur-sm rounded-xl border border-gray-200/50 shadow-sm space-y-4">
               <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wide">

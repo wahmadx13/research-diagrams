@@ -76,6 +76,7 @@ export default function ConcentricDesigner() {
         selectedShapeId={selectedShapeId}
         onSectorCountChange={updateSectorCount}
         onOuterLabelChange={updateOuterLabel}
+        onChannelTextChange={updateChannelText}
         onConfigChange={updateConfig}
         onAddLevel={addLevel}
         onRemoveLevel={removeLevel}

@@ -57,7 +57,12 @@ const initialData: DiagramData = {
       ],
     },
   ],
-  channelTexts: {},
+  channelTexts: {
+    "channel-0": "",
+    "channel-1": "",
+    "channel-2": "",
+    "channel-3": "",
+  },
   outermostLabels: ["Label A", "Label B", "Label C", "Label D"],
   arrows: [],
   shapes: [],
@@ -129,10 +134,19 @@ export function useDiagramData() {
       const newLabels = [...prev.outermostLabels];
       while (newLabels.length < n)
         newLabels.push(`Label ${newLabels.length + 1}`);
+
+      const newChannelTexts = { ...prev.channelTexts };
+      for (let i = 0; i < n; i++) {
+        if (!newChannelTexts[`channel-${i}`]) {
+          newChannelTexts[`channel-${i}`] = "";
+        }
+      }
+
       return {
         ...prev,
         sectors: n,
         outermostLabels: newLabels.slice(0, n),
+        channelTexts: newChannelTexts,
         levels: prev.levels.map((lvl) => ({
           ...lvl,
           arcs: Array(n)
