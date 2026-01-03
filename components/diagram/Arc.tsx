@@ -61,7 +61,7 @@ export function Arc({
           {arc.text}
         </textPath>
       </text>
-      {isOutermost && (
+      {isOutermost ? (
         <>
           <path id={`ol-${sectorIndex}`} d={labelPath.d} fill="none" />
           <text
@@ -78,7 +78,7 @@ export function Arc({
             </textPath>
           </text>
         </>
-      )}
+      ) : null}
     </g>
   );
 }
